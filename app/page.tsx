@@ -11,9 +11,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ArrowRight, Shield, Bug, Leaf } from "lucide-react"
 import { productsData } from "@/lib/products-data"
 
-// ✏️ Cambia estas variables para actualizar imágenes fácilmente
+// ✏️ Puedes cambiar esta imagen fácilmente
 const PORTAFOLIO_BG_IMAGE = "/images/campo-hero.jpg"
-const COBERTURA_BG_IMAGE  = "/images/campo-hero.jpg"
 
 export default function Home() {
   const scrollToSection = useCallback((section: string) => {
@@ -32,22 +31,17 @@ export default function Home() {
       <Navbar onScrollTo={scrollToSection} />
       <main className="flex-1">
 
-        {/* Hero con imagen de fondo */}
+        {/* Hero (imagen propia dentro del componente) */}
         <HeroSection onScrollTo={scrollToSection} />
 
-        {/* Cobertura — con imagen de fondo */}
-        <div
-          id="cobertura"
-          className="relative bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url('${COBERTURA_BG_IMAGE}')` }}
-        >
-          <div className="absolute inset-0 bg-black/70" />
-          <div className="relative z-10">
+        {/* Cobertura — SIN imagen */}
+        <section id="cobertura" className="py-20 bg-[#171718]">
+          <div className="container mx-auto px-4">
             <CoverageSection />
           </div>
-        </div>
+        </section>
 
-        {/* Portafolio — con imagen de fondo */}
+        {/* Portafolio — CON imagen SOLO aquí */}
         <section
           id="productos"
           className="relative py-20 bg-cover bg-center bg-no-repeat"
@@ -119,7 +113,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Contact CTA */}
+        {/* Contacto */}
         <section id="contacto" className="py-20 bg-primary/5">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
