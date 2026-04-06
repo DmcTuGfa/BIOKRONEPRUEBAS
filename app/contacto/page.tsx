@@ -223,7 +223,7 @@ export default function ContactoPage() {
               Explora nuestro catalogo completo de soluciones biologicas para la agricultura.
             </p>
             <Button asChild size="lg">
-              <Link href="/productos">Ver productos</Link>
+              <Link href="/tienda">Ver productos</Link>
             </Button>
           </div>
         </section>
