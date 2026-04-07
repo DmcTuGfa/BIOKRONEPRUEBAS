@@ -36,7 +36,6 @@ export default function Home() {
         {/* Cobertura México */}
         <section id="cobertura" className="py-20 bg-[#171718]">
           <div className="container mx-auto px-4">
-            <CoverageSection />
           </div>
         </section>
 
