@@ -98,7 +98,7 @@ export function LatamMap({ onCountryClick }: LatamMapProps) {
         style={{ maxHeight: "520px" }}
       >
         <ZoomableGroup
-          center={[-75, 5]}
+          center={[-75, 0]}
           zoom={1}
           minZoom={1}
           maxZoom={1}
