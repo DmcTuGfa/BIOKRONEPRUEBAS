@@ -11,27 +11,23 @@ export function CoverageSection() {
     <section id="cobertura" className="py-20 bg-transparent">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 text-balance">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
             Nuestra Cobertura en Mexico
           </h2>
-          <p className="text-white/75 max-w-2xl mx-auto text-pretty">
-            Haz clic en cualquier estado para conocer el estatus de cobertura y contactar directamente con tu asesor de zona.
+          <p className="text-muted-foreground max-w-2xl mx-auto text-pretty">
+            Haz clic en cualquier estado para conocer el estatus de cobertura y contactar directamente con tu
+            asesor de zona.
           </p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8 items-start">
-          {/* Map */}
           <div className="lg:col-span-2 bg-card/80 backdrop-blur-sm rounded-2xl p-6 border border-border shadow-sm">
             <MexicoMap onStateClick={setSelectedState} />
           </div>
 
-          {/* State Info Panel */}
           <div className="lg:col-span-1">
             {selectedState ? (
-              <StateInfoPanel
-                stateData={selectedState}
-                onClose={() => setSelectedState(null)}
-              />
+              <StateInfoPanel stateData={selectedState} onClose={() => setSelectedState(null)} />
             ) : (
               <div className="p-6 rounded-2xl bg-card border border-border text-center">
                 <div className="p-4 rounded-xl bg-muted/50 w-fit mx-auto mb-4">
