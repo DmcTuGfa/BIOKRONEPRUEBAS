@@ -11,7 +11,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ArrowRight, Shield, Bug, Leaf } from "lucide-react"
 import { productsData } from "@/lib/products-data"
 
-// ✏️ Puedes cambiar esta imagen fácilmente
 const PORTAFOLIO_BG_IMAGE = "/images/campo-hero.jpg"
 
 export default function Home() {
@@ -21,27 +20,23 @@ export default function Home() {
   }, [])
 
   const categoryStats = {
-    FUNGICIDAS:       productsData.filter(p => p.category === "FUNGICIDAS").length,
-    BIOINSECTICIDAS:  productsData.filter(p => p.category === "BIOINSECTICIDAS").length,
-    BIOFORTIFICANTES: productsData.filter(p => p.category === "BIOFORTIFICANTES").length,
+    FUNGICIDAS: productsData.filter((p) => p.category === "FUNGICIDAS").length,
+    BIOINSECTICIDAS: productsData.filter((p) => p.category === "BIOINSECTICIDAS").length,
+    BIOFORTIFICANTES: productsData.filter((p) => p.category === "BIOFORTIFICANTES").length,
   }
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar onScrollTo={scrollToSection} />
       <main className="flex-1">
-
-        {/* Hero (imagen propia dentro del componente) */}
         <HeroSection onScrollTo={scrollToSection} />
 
-        {/* Cobertura — SIN imagen */}
         <section id="cobertura" className="py-20 bg-[#171718]">
           <div className="container mx-auto px-4">
             <CoverageSection />
           </div>
         </section>
 
-        {/* Portafolio — CON imagen SOLO aquí */}
         <section
           id="productos"
           className="relative py-20 bg-cover bg-center bg-no-repeat"
@@ -113,7 +108,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Contacto */}
         <section id="contacto" className="py-20 bg-primary/5">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
@@ -134,7 +128,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
       </main>
       <Footer />
     </div>
