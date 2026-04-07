@@ -16,8 +16,7 @@ export function InternationalCoverageSection() {
             Cobertura Internacional
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto text-pretty">
-            Selecciona un país para saber si puedes comprar en tienda, hablar con un vendedor
-            o solicitar atención comercial.
+            Selecciona un país para revisar disponibilidad de envío internacional, vendedor o atención comercial.
           </p>
         </div>
 
@@ -51,7 +50,7 @@ export function InternationalCoverageSection() {
                 </div>
                 <h3 className="font-semibold text-foreground mb-2">Selecciona un país</h3>
                 <p className="text-sm text-muted-foreground">
-                  Haz clic en el mapa para ver si la atención es por tienda, vendedor o contacto.
+                  Haz clic en el mapa para ver disponibilidad de envío o atención comercial.
                 </p>
               </div>
             )}
