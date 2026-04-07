@@ -16,7 +16,16 @@ const getCountryColor = (
   isDark: boolean,
 ) => {
   const d = internationalCoverageData[countryName]
-  if (!d) return isHovered ? (isDark ? "#4b5563" : "#d1d5db") : isDark ? "#374151" : "#e5e7eb"
+
+  if (!d) {
+    return isHovered
+      ? isDark
+        ? "#4b5563"
+        : "#d1d5db"
+      : isDark
+        ? "#374151"
+        : "#e5e7eb"
+  }
 
   switch (d.status) {
     case "tienda":
@@ -26,9 +35,21 @@ const getCountryColor = (
     case "contacto":
       return isHovered ? "#c2410c" : "#f97316"
     case "proximamente":
-      return isHovered ? (isDark ? "#4b5563" : "#9ca3af") : isDark ? "#374151" : "#d1d5db"
+      return isHovered
+        ? isDark
+          ? "#4b5563"
+          : "#9ca3af"
+        : isDark
+          ? "#374151"
+          : "#d1d5db"
     default:
-      return isHovered ? (isDark ? "#4b5563" : "#d1d5db") : isDark ? "#374151" : "#e5e7eb"
+      return isHovered
+        ? isDark
+          ? "#4b5563"
+          : "#d1d5db"
+        : isDark
+          ? "#374151"
+          : "#e5e7eb"
   }
 }
 
@@ -56,18 +77,26 @@ export function LatamMap({ onCountryClick }: LatamMapProps) {
     return () => observer.disconnect()
   }, [])
 
-  const allowedCountries = new Set(Object.keys(internationalCoverageData))
+  const excludedCountries = new Set(["Mexico"])
+  const allowedCountries = new Set(
+    Object.keys(internationalCoverageData).filter(
+      (country) => !excludedCountries.has(country)
+    )
+  )
 
   return (
     <div className="w-full">
       <ComposableMap
         projection="geoMercator"
-        projectionConfig={{ scale: 320, center: [-75, 5] }}
+        projectionConfig={{
+          scale: 650,
+          center: [-75, 0],
+        }}
         className="w-full h-auto"
-        style={{ maxHeight: "520px" }}
+        style={{ maxHeight: "650px" }}
       >
         <ZoomableGroup
-          center={[-75, 5]}
+          center={[-75, 0]}
           zoom={1}
           minZoom={1}
           maxZoom={1}
@@ -100,7 +129,6 @@ export function LatamMap({ onCountryClick }: LatamMapProps) {
                           outline: "none",
                           cursor: "pointer",
                           filter: "brightness(1.05)",
-                          transition: "fill 0.25s ease, filter 0.25s ease",
                         },
                         pressed: {
                           outline: "none",
@@ -110,12 +138,13 @@ export function LatamMap({ onCountryClick }: LatamMapProps) {
                       onMouseLeave={() => setHoveredCountry(null)}
                       onClick={() => {
                         const d = internationalCoverageData[countryName]
+
                         onCountryClick(
                           d ?? {
                             name: countryName,
                             status: "proximamente",
                             observations: "Información no disponible.",
-                          },
+                          }
                         )
                       }}
                     />
