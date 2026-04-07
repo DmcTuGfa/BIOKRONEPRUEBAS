@@ -41,13 +41,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Cobertura Internacional */}
-        <section id="internacional" className="py-20 bg-background">
-          <div className="container mx-auto px-4">
-            <InternationalCoverageSection />
-          </div>
-        </section>
-
         {/* Portafolio — CON imagen SOLO aquí */}
         <section
           id="productos"
