@@ -57,7 +57,7 @@ export function CoverageSection() {
             </div>
 
             <div className="grid lg:grid-cols-3 gap-8 items-start">
-              <div className="lg:col-span-2 bg-card/80 backdrop-blur-sm rounded-2xl p-6 border border-border shadow-sm">
+              <div className="lg:col-span-2 bg-card rounded-2xl p-6 border border-border shadow-sm">
                 <MexicoMap onStateClick={setSelectedState} />
               </div>
 
@@ -107,7 +107,7 @@ export function CoverageSection() {
             </div>
 
             <div className="grid lg:grid-cols-3 gap-8 items-start">
-              <div className="lg:col-span-2 bg-card/80 backdrop-blur-sm rounded-2xl p-6 border border-border shadow-sm">
+              <div className="lg:col-span-2 bg-card rounded-2xl p-6 border border-border shadow-sm">
                 <LatamMap onCountryClick={setSelectedCountry} />
               </div>
 
