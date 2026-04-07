@@ -77,7 +77,14 @@ export function LatamMap({ onCountryClick }: LatamMapProps) {
     return () => observer.disconnect()
   }, [])
 
-  const excludedCountries = new Set(["Mexico"])
+  const excludedCountries = new Set([
+  "Mexico",
+  "Cuba",
+  "Haiti",
+  "Jamaica",
+  "Dominican Republic",
+  "Puerto Rico",
+])
   const allowedCountries = new Set(
     Object.keys(internationalCoverageData).filter(
       (country) => !excludedCountries.has(country)
