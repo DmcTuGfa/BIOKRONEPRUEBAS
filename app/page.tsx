@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
 import { CoverageSection } from "@/components/coverage-section"
+import { InternationalCoverageSection } from "@/components/international-coverage-section"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -31,12 +32,21 @@ export default function Home() {
       <main className="flex-1">
         <HeroSection onScrollTo={scrollToSection} />
 
+        {/* Cobertura México */}
         <section id="cobertura" className="py-20 bg-[#171718]">
           <div className="container mx-auto px-4">
             <CoverageSection />
           </div>
         </section>
 
+        {/* Cobertura Internacional */}
+        <section id="internacional" className="py-20 bg-background">
+          <div className="container mx-auto px-4">
+            <InternationalCoverageSection />
+          </div>
+        </section>
+
+        {/* Portafolio */}
         <section
           id="productos"
           className="relative py-20 bg-cover bg-center bg-no-repeat"
