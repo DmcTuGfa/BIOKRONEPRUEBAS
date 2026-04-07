@@ -3,8 +3,8 @@
 import { useCallback } from "react"
 import Link from "next/link"
 import { Navbar } from "@/components/navbar"
-import { CoverageSection } from "@/components/coverage-section"
 import { HeroSection } from "@/components/hero-section"
+import { CoverageSection } from "@/components/coverage-section"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -21,22 +21,23 @@ export default function Home() {
   }, [])
 
   const categoryStats = {
-    FUNGICIDAS: productsData.filter((p) => p.category === "FUNGICIDAS").length,
-    BIOINSECTICIDAS: productsData.filter((p) => p.category === "BIOINSECTICIDAS").length,
-    BIOFORTIFICANTES: productsData.filter((p) => p.category === "BIOFORTIFICANTES").length,
+    FUNGICIDAS:       productsData.filter(p => p.category === "FUNGICIDAS").length,
+    BIOINSECTICIDAS:  productsData.filter(p => p.category === "BIOINSECTICIDAS").length,
+    BIOFORTIFICANTES: productsData.filter(p => p.category === "BIOFORTIFICANTES").length,
   }
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar onScrollTo={scrollToSection} />
       <main className="flex-1">
+
         {/* Hero (imagen propia dentro del componente) */}
         <HeroSection onScrollTo={scrollToSection} />
 
-        {/* Cobertura México */}
+        {/* Cobertura — SIN imagen */}
         <section id="cobertura" className="py-20 bg-[#171718]">
           <div className="container mx-auto px-4">
-            <CoverageSection/>
+            <CoverageSection />
           </div>
         </section>
 
@@ -133,6 +134,7 @@ export default function Home() {
             </div>
           </div>
         </section>
+
       </main>
       <Footer />
     </div>
