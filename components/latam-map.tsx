@@ -92,18 +92,18 @@ export function LatamMap({ onCountryClick }: LatamMapProps) {
   )
 
   return (
-    <div className="w-full">
+   <div className="w-full">
   <ComposableMap
     projection="geoMercator"
     projectionConfig={{
       scale: 400,
-      center: [-75, 5],
+      center: [-75, -12],
     }}
     className="w-full h-auto"
     style={{ maxHeight: "700px" }}
   >
     <ZoomableGroup
-      center={[-75, 0]}
+      center={[-75, -12]}
       zoom={1}
       minZoom={1}
       maxZoom={1}
