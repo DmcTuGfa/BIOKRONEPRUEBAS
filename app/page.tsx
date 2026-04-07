@@ -22,23 +22,29 @@ export default function Home() {
   }, [])
 
   const categoryStats = {
-    FUNGICIDAS:       productsData.filter(p => p.category === "FUNGICIDAS").length,
-    BIOINSECTICIDAS:  productsData.filter(p => p.category === "BIOINSECTICIDAS").length,
-    BIOFORTIFICANTES: productsData.filter(p => p.category === "BIOFORTIFICANTES").length,
+    FUNGICIDAS: productsData.filter((p) => p.category === "FUNGICIDAS").length,
+    BIOINSECTICIDAS: productsData.filter((p) => p.category === "BIOINSECTICIDAS").length,
+    BIOFORTIFICANTES: productsData.filter((p) => p.category === "BIOFORTIFICANTES").length,
   }
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar onScrollTo={scrollToSection} />
       <main className="flex-1">
-
         {/* Hero (imagen propia dentro del componente) */}
         <HeroSection onScrollTo={scrollToSection} />
 
-        {/* Cobertura — SIN imagen */}
+        {/* Cobertura México */}
         <section id="cobertura" className="py-20 bg-[#171718]">
           <div className="container mx-auto px-4">
             <CoverageSection />
+          </div>
+        </section>
+
+        {/* Cobertura Internacional */}
+        <section id="internacional" className="py-20 bg-background">
+          <div className="container mx-auto px-4">
+            <InternationalCoverageSection />
           </div>
         </section>
 
@@ -135,7 +141,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
       </main>
       <Footer />
     </div>
