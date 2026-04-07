@@ -91,7 +91,7 @@ export function LatamMap({ onCountryClick }: LatamMapProps) {
       <ComposableMap
         projection="geoMercator"
         projectionConfig={{
-          scale: 320,
+          scale: 600,
           center: [-75, 5], // centrado en LATAM
         }}
         className="w-full h-auto"
