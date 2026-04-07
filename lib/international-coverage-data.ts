@@ -127,31 +127,4 @@ export const internationalCoverageData: Record<string, CountryData> = {
     status: "proximamente",
     observations: "Expansión internacional en planeación.",
   },
-  Cuba: {
-    name: "Cuba",
-    status: "proximamente",
-    observations: "Cobertura futura.",
-  },
-  "Dominican Republic": {
-    name: "República Dominicana",
-    status: "contacto",
-    observations: "Solicita atención comercial para tu zona.",
-    contactUrl: "/contacto",
-  },
-  Haiti: {
-    name: "Haití",
-    status: "proximamente",
-    observations: "Cobertura futura.",
-  },
-  Jamaica: {
-    name: "Jamaica",
-    status: "proximamente",
-    observations: "Cobertura futura.",
-  },
-  "Puerto Rico": {
-    name: "Puerto Rico",
-    status: "contacto",
-    observations: "Solicita atención comercial para tu zona.",
-    contactUrl: "/contacto",
-  },
 }
