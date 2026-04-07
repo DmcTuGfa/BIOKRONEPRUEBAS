@@ -97,13 +97,13 @@ export function LatamMap({ onCountryClick }: LatamMapProps) {
     projection="geoMercator"
     projectionConfig={{
       scale: 400,
-      center: [-75, 0],
+      center: [-75, -25],
     }}
     className="w-full h-auto"
     style={{ maxHeight: "700px" }}
   >
     <ZoomableGroup
-      center={[-75, 0]}
+      center={[-75, -25]}
       zoom={1}
       minZoom={1}
       maxZoom={1}
