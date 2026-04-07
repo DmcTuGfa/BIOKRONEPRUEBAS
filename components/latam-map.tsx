@@ -96,8 +96,8 @@ export function LatamMap({ onCountryClick }: LatamMapProps) {
   <ComposableMap
     projection="geoMercator"
     projectionConfig={{
-      scale: 520,
-      center: [-75, 0],
+      scale: 400,
+      center: [-75, 5],
     }}
     className="w-full h-auto"
     style={{ maxHeight: "700px" }}
