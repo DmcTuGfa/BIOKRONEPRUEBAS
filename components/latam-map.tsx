@@ -93,25 +93,25 @@ export function LatamMap({ onCountryClick }: LatamMapProps) {
 
   return (
     <div className="w-full">
-      <ComposableMap
-        projection="geoMercator"
-        projectionConfig={{
-          scale: 650,
-          center: [-75, 0],
-        }}
-        className="w-full h-auto"
-        style={{ maxHeight: "650px" }}
-      >
-        <ZoomableGroup
-          center={[-75, 0]}
-          zoom={1}
-          minZoom={1}
-          maxZoom={1}
-          translateExtent={[
-            [-1000, -1000],
-            [1000, 1000],
-          ]}
-        >
+  <ComposableMap
+    projection="geoMercator"
+    projectionConfig={{
+      scale: 520,
+      center: [-75, 0],
+    }}
+    className="w-full h-auto"
+    style={{ maxHeight: "700px" }}
+  >
+    <ZoomableGroup
+      center={[-75, 0]}
+      zoom={1}
+      minZoom={1}
+      maxZoom={1}
+      translateExtent={[
+        [-1000, -1000],
+        [1000, 1000],
+      ]}
+    >
           <Geographies geography={geoUrl}>
             {({ geographies }) =>
               geographies
