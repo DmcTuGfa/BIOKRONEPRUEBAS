@@ -214,7 +214,7 @@ export function MexicoMap({ onStateClick }: MexicoMapProps) {
     <div className="w-full">
       <ComposableMap
         projection="geoMercator"
-        projectionConfig={{ scale: 1200, center: [-102, 23] }}
+        projectionConfig={{ scale: 1800, center: [-102, 23] }}
         className="w-full h-auto"
         style={{ maxHeight: "500px" }}
       >
