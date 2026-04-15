@@ -4,14 +4,14 @@
   "private": true,
   "engines": { "node": "20.x" },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate deploy",
-    "db:seed": "psql $DATABASE_URL -f prisma/seed.sql",
-    "db:studio": "prisma studio"
+    "dev":          "next dev",
+    "build":        "prisma generate && next build",
+    "start":        "next start",
+    "lint":         "next lint",
+    "db:generate":  "prisma generate",
+    "db:migrate":   "prisma migrate deploy",
+    "db:studio":    "prisma studio",
+    "postinstall":  "prisma generate"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

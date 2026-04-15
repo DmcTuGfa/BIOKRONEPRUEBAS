@@ -23,6 +23,7 @@ enum OrderStatus {
   REFUNDED
 }
 
+// ─── Usuarios ────────────────────────────────────────────────────────────────
 model User {
   id                String    @id @default(cuid())
   email             String    @unique
@@ -44,6 +45,7 @@ model User {
   @@index([email])
 }
 
+// ─── Direcciones ─────────────────────────────────────────────────────────────
 model Address {
   id         String  @id @default(cuid())
   userId     String
@@ -61,23 +63,24 @@ model Address {
   @@index([userId])
 }
 
+// ─── Productos ───────────────────────────────────────────────────────────────
 model Product {
-  id           String   @id @default(cuid())
-  slug         String   @unique
-  name         String
-  description  String
-  fullDescription String @default("")
-  benefits     String[] @default([])
-  application  String   @default("")
-  presentation String
-  type         String
-  category     String
-  image        String
-  priceMxn     Int      // centavos
-  stock        Int      @default(0)
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  description     String
+  fullDescription String   @default("")
+  benefits        String[] @default([])
+  application     String   @default("")
+  presentation    String
+  type            String
+  category        String   // FUNGICIDAS | BIOINSECTICIDAS | BIOFORTIFICANTES
+  image           String
+  priceMxn        Int      // en centavos (ej: 36000 = $360.00)
+  stock           Int      @default(0)
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   orderItems OrderItem[]
 
@@ -86,31 +89,32 @@ model Product {
   @@index([active])
 }
 
+// ─── Pedidos ─────────────────────────────────────────────────────────────────
 model Order {
-  id               String      @id @default(cuid())
-  folio            String      @unique  // BIO-ORD-000001
-  userId           String
-  addressId        String?
-  status           OrderStatus @default(PENDING)
-  totalMxn         Int         // centavos — calculado en backend
-  stripeSessionId  String?     @unique
-  stripePaymentId  String?
-  shippingName     String
-  shippingStreet   String
-  shippingCity     String
-  shippingState    String
-  shippingPostal   String
-  shippingCountry  String      @default("México")
-  customerEmail    String
-  customerPhone    String?
-  notes            String?
-  paidAt           DateTime?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  id              String      @id @default(cuid())
+  folio           String      @unique // BIO-ORD-000001
+  userId          String
+  addressId       String?
+  status          OrderStatus @default(PENDING)
+  totalMxn        Int         // calculado en backend, en centavos
+  stripeSessionId String?     @unique
+  stripePaymentId String?
+  shippingName    String
+  shippingStreet  String
+  shippingCity    String
+  shippingState   String
+  shippingPostal  String
+  shippingCountry String      @default("México")
+  customerEmail   String
+  customerPhone   String?
+  notes           String?
+  paidAt          DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
-  user      User        @relation(fields: [userId], references: [id])
-  address   Address?    @relation(fields: [addressId], references: [id])
-  items     OrderItem[]
+  user    User       @relation(fields: [userId], references: [id])
+  address Address?   @relation(fields: [addressId], references: [id])
+  items   OrderItem[]
 
   @@index([userId])
   @@index([status])
@@ -118,14 +122,15 @@ model Order {
   @@index([folio])
 }
 
+// ─── Items del pedido (snapshot al momento de compra) ───────────────────────
 model OrderItem {
-  id         String @id @default(cuid())
-  orderId    String
-  productId  String
-  name       String // snapshot
-  image      String // snapshot
-  priceMxn   Int    // snapshot centavos
-  quantity   Int
+  id        String @id @default(cuid())
+  orderId   String
+  productId String
+  name      String // snapshot
+  image     String // snapshot
+  priceMxn  Int    // snapshot en centavos
+  quantity  Int
 
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])
@@ -133,7 +138,7 @@ model OrderItem {
   @@index([orderId])
 }
 
-// Secuencia global para folios — solo 1 row con id=1
+// ─── Contador de folios (1 sola fila, id=1 siempre) ─────────────────────────
 model OrderCounter {
   id    Int @id @default(1)
   count Int @default(0)

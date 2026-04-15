@@ -3,10 +3,10 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react"
 
 export interface CartItem {
-  id: string          // DB product id
+  id: string
   name: string
   slug: string
-  price: number       // priceMxn cents
+  price: number
   priceDisplay: string
   quantity: number
   presentation: string
@@ -31,14 +31,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("bk_cart")
+      const saved = localStorage.getItem("biokrone_cart")
       if (saved) setItems(JSON.parse(saved))
     } catch {}
   }, [])
 
   useEffect(() => {
-    localStorage.setItem("bk_cart", JSON.stringify(items))
-    sessionStorage.setItem("bk_cart", JSON.stringify(items))
+    localStorage.setItem("biokrone_cart", JSON.stringify(items))
+    sessionStorage.setItem("biokrone_cart", JSON.stringify(items))
   }, [items])
 
   const addToCart = useCallback((item: Omit<CartItem, "quantity">, qty = 1) => {
@@ -58,11 +58,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems(prev => prev.map(i => i.id === id ? { ...i, quantity } : i))
   }, [])
 
-  const clearCart = useCallback(() => {
-    setItems([])
-    localStorage.removeItem("bk_cart")
-    sessionStorage.removeItem("bk_cart")
-  }, [])
+  const clearCart = useCallback(() => setItems([]), [])
 
   const totalItems = items.reduce((s, i) => s + i.quantity, 0)
   const totalPrice = items.reduce((s, i) => s + i.price * i.quantity, 0)
