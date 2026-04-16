@@ -28,12 +28,10 @@ export async function POST(req: NextRequest) {
         name: data.name,
         phone: data.phone,
         passwordHash,
-        // emailVerified = true: sin confirmación por correo por ahora
-        emailVerified: true,
+        emailVerified: true, // sin confirmación por correo por ahora
       },
     })
 
-    // Auto-login after register
     const token = await signToken({ userId: user.id, email: user.email, role: user.role, name: user.name })
     await setSessionCookie(token)
 

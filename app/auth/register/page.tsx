@@ -2,6 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
+
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Leaf, Loader2, AlertCircle, Info } from "lucide-react"
+import { Leaf, Loader2, AlertCircle } from "lucide-react"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -42,10 +43,6 @@ export default function RegisterPage() {
         <Card>
           <CardHeader><CardTitle className="text-xl text-center">Crear cuenta</CardTitle></CardHeader>
           <CardContent>
-            <div className="flex items-start gap-2 p-3 mb-4 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-400 text-sm">
-              <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
-              Te enviaremos un correo de verificación. Puedes comprar de inmediato.
-            </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label>Nombre completo</Label>
