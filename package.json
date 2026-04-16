@@ -2,16 +2,20 @@
   "name": "biokrone",
   "version": "0.1.0",
   "private": true,
-  "engines": { "node": "20.x" },
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
-    "dev":          "next dev",
-    "build":        "prisma generate && prisma db push && next build",
-    "start":        "next start",
-    "lint":         "next lint",
-    "db:generate":  "prisma generate",
-    "db:migrate":   "prisma db push",
-    "db:studio":    "prisma studio",
-    "postinstall":  "prisma generate"
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma db push",
+    "db:studio": "prisma studio",
+    "postinstall": "prisma generate",
+    "db:push": "prisma db push",
+    "db:init": "prisma db push && node prisma/seed.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

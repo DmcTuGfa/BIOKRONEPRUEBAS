@@ -194,3 +194,19 @@ Start Command recomendado:
 ```bash
 npm start
 ```
+
+
+## Deploy en Railway + Neon
+
+Usa en Railway:
+
+- Build Command: `npm install && npm run build`
+- Start Command: `npm start`
+
+No metas `prisma db push` en build. Si la base ya está conectada, inicialízala manualmente una sola vez con:
+
+```bash
+npm run db:init
+```
+
+Si Neon falla o está dormido, el sitio puede arrancar pero las rutas que dependan de BD no responderán hasta que la conexión quede bien.
