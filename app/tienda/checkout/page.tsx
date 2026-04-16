@@ -2,8 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -14,8 +13,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { Textarea } from "@/components/ui/textarea"
 import { useCart } from "@/contexts/cart-context"
-import { StripePaymentForm } from "@/components/stripe-payment-form"
+import { useAuth } from "@/contexts/auth-context"
 import {
   ArrowLeft,
   CreditCard,
@@ -26,57 +26,78 @@ import {
   Minus,
   Plus,
   Trash2,
+  User,
+  Package,
 } from "lucide-react"
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, updateQuantity, removeFromCart, clearCart, totalPrice } = useCart()
-  const [email, setEmail] = useState("")
+  const { items, updateQuantity, removeFromCart, totalPrice } = useCart()
+  const { user, loading: authLoading } = useAuth()
+
   const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
-  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [street, setStreet] = useState("")
+  const [city, setCity] = useState("")
+  const [state, setState] = useState("")
+  const [postalCode, setPostalCode] = useState("")
+  const [country, setCountry] = useState("México")
+  const [notes, setNotes] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [step, setStep] = useState<"info" | "payment">("info")
+
+  useEffect(() => {
+    if (user) {
+      setName((prev) => prev || user.name || "")
+      setEmail(user.email || "")
+      setPhone((prev) => prev || user.phone || "")
+    }
+  }, [user])
 
   const totalDisplay = (totalPrice / 100).toLocaleString("es-MX", { minimumFractionDigits: 2 })
 
-  const handleContinue = async () => {
-    if (!email || !name) return
+  const handleCheckout = async () => {
+    if (!user) {
+      router.push(`/auth/login?redirect=${encodeURIComponent("/tienda/checkout")}`)
+      return
+    }
 
     setLoading(true)
     setError(null)
 
     try {
-      const cartItems = items.map((i) => ({
-        id: i.id,
-        name: i.name,
-        price: i.price,
-        quantity: i.quantity,
-        presentation: i.presentation,
-      }))
-
-      const res = await fetch("/api/create-payment-intent", {
+      const res = await fetch("/api/checkout/create-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: cartItems, customerEmail: email }),
+        body: JSON.stringify({
+          items: items.map((item) => ({
+            productId: item.id,
+            productSlug: item.slug,
+            quantity: item.quantity,
+          })),
+          address: {
+            name,
+            street,
+            city,
+            state,
+            postalCode,
+            country,
+          },
+          phone,
+          notes,
+        }),
       })
 
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Error al crear el pago")
+      if (!res.ok) throw new Error(data.error || "No se pudo iniciar el pago")
+      if (!data.url) throw new Error("Stripe no devolvió la URL de pago")
 
-      setClientSecret(data.clientSecret)
-      setStep("payment")
+      window.location.href = data.url
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error desconocido")
-    } finally {
       setLoading(false)
     }
-  }
-
-  const handleSuccess = () => {
-    clearCart()
-    router.push("/tienda/success")
   }
 
   if (items.length === 0) {
@@ -111,95 +132,129 @@ export default function CheckoutPage() {
             <h1 className="text-2xl font-bold text-foreground">Finalizar compra</h1>
           </div>
 
-          <div className="grid lg:grid-cols-5 gap-8 max-w-5xl mx-auto">
+          <div className="grid lg:grid-cols-5 gap-8 max-w-6xl mx-auto">
             <div className="lg:col-span-3 space-y-6">
-              {step === "info" && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Truck className="h-5 w-5 text-primary" />
-                      Información de contacto
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Nombre completo *</Label>
-                        <Input id="name" placeholder="Tu nombre" value={name} onChange={(e) => setName(e.target.value)} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Correo electrónico *</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder="tu@correo.com"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                        />
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-primary" />
+                    Cuenta
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {authLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Validando sesión...
+                    </div>
+                  ) : user ? (
+                    <div className="rounded-xl border border-border bg-muted/40 p-4">
+                      <p className="font-medium text-foreground">{user.name}</p>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        El pedido quedará ligado a tu cuenta para verlo después en <strong>Mis pedidos</strong>.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-3">
+                      <p className="font-medium text-foreground">Necesitas iniciar sesión para continuar.</p>
+                      <p className="text-sm text-muted-foreground">
+                        Así tu compra queda guardada en la base de datos y luego podrás verla en tu cuenta.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button asChild>
+                          <Link href="/auth/login?redirect=/tienda/checkout">Iniciar sesión</Link>
+                        </Button>
+                        <Button variant="outline" asChild>
+                          <Link href="/auth/register?redirect=/tienda/checkout">Crear cuenta</Link>
+                        </Button>
                       </div>
                     </div>
+                  )}
+                </CardContent>
+              </Card>
 
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Truck className="h-5 w-5 text-primary" />
+                    Datos de envío
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Nombre completo *</Label>
+                      <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del receptor" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Correo electrónico *</Label>
+                      <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled />
+                    </div>
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="phone">Teléfono</Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="+52 000 000 0000"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                      />
+                      <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="442..." />
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="postalCode">Código postal *</Label>
+                      <Input id="postalCode" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="38000" />
+                    </div>
+                  </div>
 
-                    {error && (
-                      <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
-                        <AlertCircle className="h-4 w-4" />
-                        {error}
-                      </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="street">Calle y número *</Label>
+                    <Input id="street" value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Calle, número, colonia" />
+                  </div>
+
+                  <div className="grid sm:grid-cols-3 gap-4">
+                    <div className="space-y-2 sm:col-span-1">
+                      <Label htmlFor="city">Ciudad *</Label>
+                      <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Celaya" />
+                    </div>
+                    <div className="space-y-2 sm:col-span-1">
+                      <Label htmlFor="state">Estado *</Label>
+                      <Input id="state" value={state} onChange={(e) => setState(e.target.value)} placeholder="Guanajuato" />
+                    </div>
+                    <div className="space-y-2 sm:col-span-1">
+                      <Label htmlFor="country">País *</Label>
+                      <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="México" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">Notas del pedido</Label>
+                    <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Referencias, horario, indicaciones..." />
+                  </div>
+
+                  {error && (
+                    <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
+                      <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                      {error}
+                    </div>
+                  )}
+
+                  <Button
+                    className="w-full h-12 text-base"
+                    onClick={handleCheckout}
+                    disabled={loading || authLoading || !user || !name || !street || !city || !state || !postalCode || !country}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                        Redirigiendo a Stripe...
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="h-5 w-5 mr-2" />
+                        Continuar al pago
+                      </>
                     )}
-
-                    <Button className="w-full h-12 text-base" onClick={handleContinue} disabled={loading || !email || !name}>
-                      {loading ? (
-                        <>
-                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                          Procesando...
-                        </>
-                      ) : (
-                        <>
-                          <CreditCard className="h-5 w-5 mr-2" />
-                          Continuar al pago
-                        </>
-                      )}
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-
-              {step === "payment" && clientSecret && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <CreditCard className="h-5 w-5 text-primary" />
-                      Datos de pago
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="mb-4 p-3 rounded-lg bg-muted text-sm text-muted-foreground">
-                      Comprando como: <span className="font-medium text-foreground">{name}</span> ({email})
-                      <button
-                        className="ml-2 text-primary hover:underline text-xs"
-                        onClick={() => {
-                          setStep("info")
-                          setClientSecret(null)
-                        }}
-                      >
-                        Cambiar
-                      </button>
-                    </div>
-
-                    <StripePaymentForm clientSecret={clientSecret} onSuccess={handleSuccess} />
-                  </CardContent>
-                </Card>
-              )}
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
 
             <div className="lg:col-span-2">
@@ -274,7 +329,11 @@ export default function CheckoutPage() {
                   <div className="pt-2 space-y-2 text-xs text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-                      Pago procesado por Stripe
+                      Pago procesado por Stripe Checkout
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Package className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                      Tu pedido quedará guardado en tu cuenta
                     </div>
                     <div className="flex items-center gap-2">
                       <Truck className="h-3.5 w-3.5 text-primary flex-shrink-0" />

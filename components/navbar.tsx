@@ -5,9 +5,18 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Menu, X, Leaf, ShoppingCart } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Menu, X, Leaf, ShoppingCart, User, Package, LogOut } from "lucide-react"
 import { ThemeToggle } from "./theme-toggle"
 import { useCart } from "@/contexts/cart-context"
+import { useAuth } from "@/contexts/auth-context"
 
 interface NavbarProps {
   onScrollTo?: (section: string) => void
@@ -18,6 +27,7 @@ export function Navbar({ onScrollTo }: NavbarProps) {
   const pathname = usePathname()
   const isHomePage = pathname === "/"
   const { totalItems } = useCart()
+  const { user, loading, logout } = useAuth()
 
   const navItems = [
     { label: "Inicio", href: "/", section: "hero" },
@@ -33,16 +43,14 @@ export function Navbar({ onScrollTo }: NavbarProps) {
   }
 
   const desktopNavClass = (isActive: boolean) =>
-    isActive
-      ? "text-foreground"
-      : "text-muted-foreground hover:text-foreground"
+    isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
 
   const mobileNavClass = "justify-start text-muted-foreground hover:text-foreground"
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background backdrop-blur supports-[backdrop-filter]:bg-background/95">
       <nav className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-16 items-center justify-between gap-3">
           <Link
             href="/"
             className="flex items-center gap-2 font-bold text-xl text-foreground hover:text-primary transition-colors"
@@ -94,6 +102,54 @@ export function Navbar({ onScrollTo }: NavbarProps) {
                 )}
               </Link>
             </Button>
+
+            {!loading && (user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2 max-w-[210px]">
+                    <User className="h-4 w-4" />
+                    <span className="truncate">{user.name}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-60">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col">
+                      <span className="font-medium truncate">{user.name}</span>
+                      <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/cuenta/pedidos" className="cursor-pointer">
+                      <Package className="h-4 w-4" />
+                      Mis pedidos
+                    </Link>
+                  </DropdownMenuItem>
+                  {user.role === "ADMIN" && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin/pedidos" className="cursor-pointer">
+                        <Package className="h-4 w-4" />
+                        Panel admin
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => logout()} className="cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="h-4 w-4" />
+                    Cerrar sesión
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link href={`/auth/login?redirect=${encodeURIComponent(pathname || "/")}`}>Iniciar sesión</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/auth/register">Crear cuenta</Link>
+                </Button>
+              </>
+            ))}
           </div>
 
           <div className="flex md:hidden items-center gap-2">
@@ -145,6 +201,44 @@ export function Navbar({ onScrollTo }: NavbarProps) {
                   </Button>
                 )
               })}
+
+              <div className="pt-2 mt-2 border-t border-border flex flex-col gap-2">
+                {user ? (
+                  <>
+                    <div className="px-3 py-2 text-sm rounded-lg bg-muted">
+                      <p className="font-medium text-foreground">{user.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                    <Button variant="ghost" asChild className={mobileNavClass} onClick={() => setIsOpen(false)}>
+                      <Link href="/cuenta/pedidos">Mis pedidos</Link>
+                    </Button>
+                    {user.role === "ADMIN" && (
+                      <Button variant="ghost" asChild className={mobileNavClass} onClick={() => setIsOpen(false)}>
+                        <Link href="/admin/pedidos">Panel admin</Link>
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      className={`${mobileNavClass} text-destructive hover:text-destructive`}
+                      onClick={async () => {
+                        setIsOpen(false)
+                        await logout()
+                      }}
+                    >
+                      Cerrar sesión
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="ghost" asChild className={mobileNavClass} onClick={() => setIsOpen(false)}>
+                      <Link href={`/auth/login?redirect=${encodeURIComponent(pathname || "/")}`}>Iniciar sesión</Link>
+                    </Button>
+                    <Button asChild onClick={() => setIsOpen(false)}>
+                      <Link href="/auth/register">Crear cuenta</Link>
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )}

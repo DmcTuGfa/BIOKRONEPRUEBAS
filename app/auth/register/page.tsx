@@ -2,10 +2,9 @@
 
 export const dynamic = 'force-dynamic'
 
-
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,8 +12,10 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Leaf, Loader2, AlertCircle } from "lucide-react"
 
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get("redirect") || "/cuenta/pedidos"
   const { register } = useAuth()
   const [form, setForm] = useState({ name: "", email: "", password: "", phone: "" })
   const [error, setError] = useState<string | null>(null)
@@ -22,14 +23,23 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (form.password.length < 8) { setError("La contraseña debe tener al menos 8 caracteres"); return }
-    setLoading(true); setError(null)
+    if (form.password.length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres")
+      return
+    }
+    setLoading(true)
+    setError(null)
     const result = await register(form.name, form.email, form.password, form.phone || undefined)
-    if (result.error) { setError(result.error); setLoading(false); return }
-    router.push("/cuenta/pedidos")
+    if (result.error) {
+      setError(result.error)
+      setLoading(false)
+      return
+    }
+    router.push(redirect)
   }
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, [k]: e.target.value }))
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }))
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
@@ -70,11 +80,19 @@ export default function RegisterPage() {
               </Button>
             </form>
             <p className="text-center text-sm text-muted-foreground mt-4">
-              ¿Ya tienes cuenta? <Link href="/auth/login" className="text-primary hover:underline font-medium">Inicia sesión</Link>
+              ¿Ya tienes cuenta? <Link href={`/auth/login?redirect=${encodeURIComponent(redirect)}`} className="text-primary hover:underline font-medium">Inicia sesión</Link>
             </p>
           </CardContent>
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-muted/30" />}>
+      <RegisterContent />
+    </Suspense>
   )
 }

@@ -1,11 +1,17 @@
+"use client"
+
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { CheckCircle2, ArrowRight, Package, Mail } from "lucide-react"
+import { CheckCircle2, ArrowRight, Package, Mail, ReceiptText } from "lucide-react"
 
 export default function SuccessPage() {
+  const searchParams = useSearchParams()
+  const folio = searchParams.get("folio")
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -18,25 +24,32 @@ export default function SuccessPage() {
               </div>
               <h1 className="text-3xl font-bold text-foreground mb-3">¡Pago exitoso!</h1>
               <p className="text-muted-foreground mb-2 leading-relaxed">
-                Tu pedido ha sido confirmado. Recibirás un correo electrónico con los detalles y número de seguimiento.
+                Tu pedido ha sido registrado correctamente y quedó asociado a tu cuenta.
               </p>
-              <p className="text-sm text-muted-foreground mb-8">
-                Nuestro equipo procesará tu pedido y lo enviará a la brevedad.
-              </p>
+
+              {folio && (
+                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground">
+                  <ReceiptText className="h-4 w-4 text-primary" />
+                  Folio: {folio}
+                </div>
+              )}
 
               <div className="p-4 rounded-xl bg-muted/50 border border-border mb-8 flex items-start gap-3 text-left">
                 <Mail className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-foreground">Revisa tu correo</p>
-                  <p className="text-xs text-muted-foreground">Te enviamos la confirmación y los detalles del envío.</p>
+                  <p className="text-xs text-muted-foreground">Te enviamos la confirmación y podrás revisar el pedido en tu cuenta.</p>
                 </div>
               </div>
 
               <div className="flex flex-col gap-3">
                 <Button asChild className="gap-2">
-                  <Link href="/tienda">
-                    <Package className="h-4 w-4" />Seguir comprando<ArrowRight className="h-4 w-4" />
+                  <Link href="/cuenta/pedidos">
+                    <Package className="h-4 w-4" />Ver mis pedidos<ArrowRight className="h-4 w-4" />
                   </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/tienda">Seguir comprando</Link>
                 </Button>
                 <Button asChild variant="ghost" size="sm">
                   <Link href="/">Volver al inicio</Link>
