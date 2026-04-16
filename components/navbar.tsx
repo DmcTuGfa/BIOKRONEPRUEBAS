@@ -104,42 +104,49 @@ export function Navbar({ onScrollTo }: NavbarProps) {
             </Button>
 
             {!loading && (user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2 max-w-[210px]">
+              <div className="flex items-center gap-2">
+                <Button variant="outline" asChild className="gap-2 max-w-[210px]">
+                  <Link href="/cuenta/pedidos">
                     <User className="h-4 w-4" />
                     <span className="truncate">{user.name}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-60">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col">
-                      <span className="font-medium truncate">{user.name}</span>
-                      <span className="text-xs text-muted-foreground truncate">{user.email}</span>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/cuenta/pedidos" className="cursor-pointer">
-                      <Package className="h-4 w-4" />
-                      Mis pedidos
-                    </Link>
-                  </DropdownMenuItem>
-                  {user.role === "ADMIN" && (
+                  </Link>
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" aria-label="Opciones de cuenta">
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-60">
+                    <DropdownMenuLabel>
+                      <div className="flex flex-col">
+                        <span className="font-medium truncate">{user.name}</span>
+                        <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link href="/admin/pedidos" className="cursor-pointer">
+                      <Link href="/cuenta/pedidos" className="cursor-pointer">
                         <Package className="h-4 w-4" />
-                        Panel admin
+                        Mis pedidos
                       </Link>
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => logout()} className="cursor-pointer text-destructive focus:text-destructive">
-                    <LogOut className="h-4 w-4" />
-                    Cerrar sesión
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    {user.role === "ADMIN" && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin/pedidos" className="cursor-pointer">
+                          <Package className="h-4 w-4" />
+                          Panel admin
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => logout()} className="cursor-pointer text-destructive focus:text-destructive">
+                      <LogOut className="h-4 w-4" />
+                      Cerrar sesión
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             ) : (
               <>
                 <Button variant="ghost" asChild>
