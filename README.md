@@ -45,7 +45,7 @@ npm install
 npm run db:generate
 
 # Aplica el schema a Neon
-npx prisma migrate dev --name init
+npx prisma db push
 
 # Carga los productos iniciales
 npm run db:seed
@@ -61,6 +61,7 @@ npm run db:seed
 1. Ve a [dashboard.stripe.com/apikeys](https://dashboard.stripe.com/apikeys)
 2. Copia `Publishable key` → `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 3. Copia `Secret key` → `STRIPE_SECRET_KEY`
+4. Usa ambas del mismo modo: `pk_test` con `sk_test`, o `pk_live` con `sk_live`.
 
 ### Webhook
 1. Ve a [dashboard.stripe.com/webhooks](https://dashboard.stripe.com/webhooks)
@@ -101,7 +102,7 @@ En el dashboard de Vercel → **Settings → Environment Variables**, agrega tod
 Después del primer deploy, ejecuta las migraciones:
 ```bash
 # Localmente apuntando a Neon
-npx prisma migrate deploy
+npx prisma db push
 npm run db:seed
 ```
 
@@ -169,4 +170,27 @@ prisma/
   schema.prisma     # schema completo
   seed.sql          # productos iniciales
 middleware.ts       # protección de rutas
+```
+
+
+## Deploy en Railway
+
+Variables mínimas:
+
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `NEXT_PUBLIC_APP_URL`
+- `STRIPE_SECRET_KEY`
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+
+Build Command recomendado:
+
+```bash
+npm install && npm run build
+```
+
+Start Command recomendado:
+
+```bash
+npm start
 ```
