@@ -1,16 +1,18 @@
-"use client"
-
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle2, ArrowRight, Package, Mail, ReceiptText } from "lucide-react"
 
-export default function SuccessPage() {
-  const searchParams = useSearchParams()
-  const folio = searchParams.get("folio")
+type SuccessPageProps = {
+  searchParams?: {
+    folio?: string
+  }
+}
+
+export default function SuccessPage({ searchParams }: SuccessPageProps) {
+  const folio = searchParams?.folio
 
   return (
     <div className="min-h-screen flex flex-col">
