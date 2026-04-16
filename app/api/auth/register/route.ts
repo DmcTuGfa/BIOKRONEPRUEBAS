@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { hashPassword, signToken, setSessionCookie } from "@/lib/auth"
-import { sendEmail, verifyEmailTemplate } from "@/lib/email"
-import crypto from "crypto"
 
 const schema = z.object({
   name:     z.string().min(2).max(80),
@@ -23,8 +21,6 @@ export async function POST(req: NextRequest) {
     }
 
     const passwordHash = await hashPassword(data.password)
-    const verifyToken = crypto.randomBytes(32).toString("hex")
-    const verifyTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000)
 
     const user = await prisma.user.create({
       data: {
@@ -32,20 +28,19 @@ export async function POST(req: NextRequest) {
         name: data.name,
         phone: data.phone,
         passwordHash,
-        verifyToken,
-        verifyTokenExpiry,
+        // emailVerified = true: sin confirmación por correo por ahora
+        emailVerified: true,
       },
     })
-
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-    const link = `${appUrl}/auth/verify-email?token=${verifyToken}`
-    await sendEmail({ to: user.email, subject: "Verifica tu correo — BIOKRONE", html: verifyEmailTemplate(user.name, link) })
 
     // Auto-login after register
     const token = await signToken({ userId: user.id, email: user.email, role: user.role, name: user.name })
     await setSessionCookie(token)
 
-    return NextResponse.json({ ok: true, user: { id: user.id, email: user.email, name: user.name, role: user.role, emailVerified: false } })
+    return NextResponse.json({
+      ok: true,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, emailVerified: true },
+    })
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: err.errors[0].message }, { status: 400 })
     console.error("[register]", err)
