@@ -23,10 +23,15 @@ function LoginContent() {
   const [loading, setLoading] = useState(false)
 
   const verified = searchParams.get("verified") === "1"
-  const redirect = searchParams.get("redirect") || "/"
+  const redirect = searchParams.get("redirect") || ""
 
   useEffect(() => {
-    if (user) router.push(redirect)
+    if (!user) return
+    if (redirect) {
+      router.push(redirect)
+      return
+    }
+    router.push(user.role === "ADMIN" ? "/admin" : "/cuenta/pedidos")
   }, [user, router, redirect])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,7 +46,12 @@ function LoginContent() {
       return
     }
 
-    router.push(redirect)
+    const nextUser = result.user || user
+    if (redirect) {
+      router.push(redirect)
+    } else {
+      router.push(nextUser?.role === "ADMIN" ? "/admin" : "/cuenta/pedidos")
+    }
   }
 
   return (

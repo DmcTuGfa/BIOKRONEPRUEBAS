@@ -14,8 +14,8 @@ interface User {
 interface AuthContextType {
   user: User | null
   loading: boolean
-  login: (email: string, password: string) => Promise<{ error?: string }>
-  register: (name: string, email: string, password: string, phone?: string) => Promise<{ error?: string }>
+  login: (email: string, password: string) => Promise<{ error?: string; user?: User | null }>
+  register: (name: string, email: string, password: string, phone?: string) => Promise<{ error?: string; user?: User | null }>
   logout: () => Promise<void>
   refresh: () => Promise<void>
 }
@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch("/api/auth/me")
+      const res = await fetch("/api/auth/me", { cache: "no-store" })
       const data = await res.json()
       setUser(data.user)
     } catch {
@@ -42,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const res = await fetch("/api/auth/login", {
+      cache: "no-store",
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -49,11 +50,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await res.json()
     if (!res.ok) return { error: data.error }
     setUser(data.user)
-    return {}
+    return { user: data.user }
   }
 
   const register = async (name: string, email: string, password: string, phone?: string) => {
     const res = await fetch("/api/auth/register", {
+      cache: "no-store",
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password, phone }),
@@ -61,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await res.json()
     if (!res.ok) return { error: data.error }
     setUser(data.user)
-    return {}
+    return { user: data.user }
   }
 
   const logout = async () => {

@@ -76,10 +76,26 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 export async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  const [saltHex, storedHash] = stored.split(":")
+  if (!stored) return false
+
+  // Formato actual: salt:sha256(salt + password)
+  if (stored.includes(":")) {
+    const [saltHex, storedHash] = stored.split(":")
+    if (!saltHex || !storedHash) return false
+    const encoder = new TextEncoder()
+    const data = encoder.encode(saltHex + password)
+    const hash = await crypto.subtle.digest("SHA-256", data)
+    const hashHex = Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("")
+    return hashHex === storedHash
+  }
+
+  // Compatibilidad con usuarios legacy creados manualmente:
+  // 1) texto plano
+  if (stored === password) return true
+
+  // 2) sha256(password) sin salt
   const encoder = new TextEncoder()
-  const data = encoder.encode(saltHex + password)
-  const hash = await crypto.subtle.digest("SHA-256", data)
-  const hashHex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("")
-  return hashHex === storedHash
+  const rawHash = await crypto.subtle.digest("SHA-256", encoder.encode(password))
+  const rawHashHex = Array.from(new Uint8Array(rawHash)).map((b) => b.toString(16).padStart(2, "0")).join("")
+  return rawHashHex === stored
 }

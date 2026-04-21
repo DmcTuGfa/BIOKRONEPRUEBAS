@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
-import { verifyPassword, signToken, setSessionCookie } from "@/lib/auth"
+import { verifyPassword, signToken, setSessionCookie, hashPassword } from "@/lib/auth"
 
 const schema = z.object({
   email:    z.string().email(),
@@ -21,6 +21,15 @@ export async function POST(req: NextRequest) {
     const valid = await verifyPassword(data.password, user.passwordHash)
     if (!valid) {
       return NextResponse.json({ error: "Credenciales incorrectas" }, { status: 401 })
+    }
+
+    // Si el usuario tenía una contraseña legacy (texto plano o hash sin salt),
+    // la migramos al formato actual en cuanto inicia sesión correctamente.
+    if (!user.passwordHash.includes(":")) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash: await hashPassword(data.password) },
+      })
     }
 
     const token = await signToken({ userId: user.id, email: user.email, role: user.role, name: user.name })

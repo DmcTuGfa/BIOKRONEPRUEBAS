@@ -98,11 +98,23 @@ export function Navbar({ onScrollTo }: NavbarProps) {
             </Button>
 
             {!loading && (user ? (
-              <div className="flex items-center gap-1.5">
-                {/* Dropdown de cuenta */}
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" asChild className="h-9 px-3">
+                  <Link href="/cuenta/pedidos">
+                    <Package className="h-4 w-4 mr-2" />Mis pedidos
+                  </Link>
+                </Button>
+                {user.role === "ADMIN" && (
+                  <Button variant="ghost" asChild className="h-9 px-3">
+                    <Link href="/admin">
+                      <ShieldCheck className="h-4 w-4 mr-2" />Admin
+                    </Link>
+                  </Button>
+                )}
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="gap-2 max-w-[200px] h-9">
+                    <Button variant="outline" className="gap-2 max-w-[220px] h-9">
                       <User className="h-4 w-4 shrink-0" />
                       <span className="truncate text-sm">{user.name}</span>
                       <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -134,17 +146,6 @@ export function Navbar({ onScrollTo }: NavbarProps) {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-
-                {/* Botón de cerrar sesión siempre visible */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                  title="Cerrar sesión"
-                  onClick={() => logout()}
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
               </div>
             ) : (
               <>
