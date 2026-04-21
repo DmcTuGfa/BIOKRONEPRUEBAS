@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Menu, X, Leaf, ShoppingCart, User, Package, LogOut } from "lucide-react"
+import { Menu, X, Leaf, ShoppingCart, User, Package, LogOut, ShieldCheck, ChevronDown } from "lucide-react"
 import { ThemeToggle } from "./theme-toggle"
 import { useCart } from "@/contexts/cart-context"
 import { useAuth } from "@/contexts/auth-context"
@@ -30,11 +30,11 @@ export function Navbar({ onScrollTo }: NavbarProps) {
   const { user, loading, logout } = useAuth()
 
   const navItems = [
-    { label: "Inicio", href: "/", section: "hero" },
+    { label: "Inicio",    href: "/",          section: "hero" },
     { label: "Cobertura", href: "/#cobertura", section: "cobertura" },
-    { label: "Tienda", href: "/tienda", section: "" },
-    { label: "Acerca de", href: "/nosotros", section: "" },
-    { label: "Contacto", href: "/contacto", section: "contacto" },
+    { label: "Tienda",    href: "/tienda",     section: "" },
+    { label: "Acerca de", href: "/nosotros",   section: "" },
+    { label: "Contacto",  href: "/contacto",   section: "contacto" },
   ]
 
   const handleNavClick = (item: { href: string; section: string }) => {
@@ -51,36 +51,28 @@ export function Navbar({ onScrollTo }: NavbarProps) {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background backdrop-blur supports-[backdrop-filter]:bg-background/95">
       <nav className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between gap-3">
-          <Link
-            href="/"
-            className="flex items-center gap-2 font-bold text-xl text-foreground hover:text-primary transition-colors"
-          >
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 font-bold text-xl text-foreground hover:text-primary transition-colors">
             <div className="p-1.5 rounded-lg bg-primary">
               <Leaf className="h-5 w-5 text-primary-foreground" />
             </div>
             BIOKRONE
           </Link>
 
+          {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-1">
             {navItems.map((item) => {
-              const isActive =
-                item.href === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(item.href.split("#")[0]) && item.href !== "/"
+              const isActive = item.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(item.href.split("#")[0]) && item.href !== "/"
 
               if (isHomePage && item.section && item.href.includes("#")) {
                 return (
-                  <Button
-                    key={item.section}
-                    variant="ghost"
-                    onClick={() => handleNavClick(item)}
-                    className={desktopNavClass(isActive)}
-                  >
+                  <Button key={item.section} variant="ghost" onClick={() => handleNavClick(item)} className={desktopNavClass(isActive)}>
                     {item.label}
                   </Button>
                 )
               }
-
               return (
                 <Button key={item.href} variant="ghost" asChild className={desktopNavClass(isActive)}>
                   <Link href={item.href}>{item.label}</Link>
@@ -89,9 +81,11 @@ export function Navbar({ onScrollTo }: NavbarProps) {
             })}
           </div>
 
+          {/* Desktop right actions */}
           <div className="hidden md:flex items-center gap-2">
             <ThemeToggle />
 
+            {/* Carrito */}
             <Button variant="outline" size="icon" className="relative" asChild>
               <Link href="/tienda/checkout">
                 <ShoppingCart className="h-5 w-5" />
@@ -104,20 +98,17 @@ export function Navbar({ onScrollTo }: NavbarProps) {
             </Button>
 
             {!loading && (user ? (
-              <div className="flex items-center gap-2">
-                <Button variant="outline" asChild className="gap-2 max-w-[210px]">
-                  <Link href="/cuenta/pedidos">
-                    <User className="h-4 w-4" />
-                    <span className="truncate">{user.name}</span>
-                  </Link>
-                </Button>
+              <div className="flex items-center gap-1.5">
+                {/* Dropdown de cuenta */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon" aria-label="Opciones de cuenta">
-                      <User className="h-4 w-4" />
+                    <Button variant="outline" className="gap-2 max-w-[200px] h-9">
+                      <User className="h-4 w-4 shrink-0" />
+                      <span className="truncate text-sm">{user.name}</span>
+                      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-60">
+                  <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel>
                       <div className="flex flex-col">
                         <span className="font-medium truncate">{user.name}</span>
@@ -127,25 +118,33 @@ export function Navbar({ onScrollTo }: NavbarProps) {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link href="/cuenta/pedidos" className="cursor-pointer">
-                        <Package className="h-4 w-4" />
-                        Mis pedidos
+                        <Package className="h-4 w-4 mr-2" />Mis pedidos
                       </Link>
                     </DropdownMenuItem>
                     {user.role === "ADMIN" && (
                       <DropdownMenuItem asChild>
-                        <Link href="/admin/pedidos" className="cursor-pointer">
-                          <Package className="h-4 w-4" />
-                          Panel admin
+                        <Link href="/admin" className="cursor-pointer">
+                          <ShieldCheck className="h-4 w-4 mr-2" />Panel admin
                         </Link>
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => logout()} className="cursor-pointer text-destructive focus:text-destructive">
-                      <LogOut className="h-4 w-4" />
-                      Cerrar sesión
+                      <LogOut className="h-4 w-4 mr-2" />Cerrar sesión
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+
+                {/* Botón de cerrar sesión siempre visible */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  title="Cerrar sesión"
+                  onClick={() => logout()}
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
               </div>
             ) : (
               <>
@@ -159,9 +158,9 @@ export function Navbar({ onScrollTo }: NavbarProps) {
             ))}
           </div>
 
+          {/* Mobile right */}
           <div className="flex md:hidden items-center gap-2">
             <ThemeToggle />
-
             <Button variant="outline" size="icon" className="relative" asChild>
               <Link href="/tienda/checkout">
                 <ShoppingCart className="h-5 w-5" />
@@ -172,38 +171,37 @@ export function Navbar({ onScrollTo }: NavbarProps) {
                 )}
               </Link>
             </Button>
-
+            {/* Cerrar sesión directo en mobile si está logueado */}
+            {user && (
+              <Button
+                variant="ghost" size="icon"
+                className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                title="Cerrar sesión"
+                onClick={() => logout()}
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)}>
               {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
         </div>
 
+        {/* Mobile menu */}
         {isOpen && (
           <div className="md:hidden py-4 border-t border-border animate-in slide-in-from-top-2 duration-200">
             <div className="flex flex-col gap-2">
               {navItems.map((item) => {
                 if (isHomePage && item.section && item.href.includes("#")) {
                   return (
-                    <Button
-                      key={item.section}
-                      variant="ghost"
-                      onClick={() => handleNavClick(item)}
-                      className={mobileNavClass}
-                    >
+                    <Button key={item.section} variant="ghost" onClick={() => handleNavClick(item)} className={mobileNavClass}>
                       {item.label}
                     </Button>
                   )
                 }
-
                 return (
-                  <Button
-                    key={item.href}
-                    variant="ghost"
-                    asChild
-                    className={mobileNavClass}
-                    onClick={() => setIsOpen(false)}
-                  >
+                  <Button key={item.href} variant="ghost" asChild className={mobileNavClass} onClick={() => setIsOpen(false)}>
                     <Link href={item.href}>{item.label}</Link>
                   </Button>
                 )
@@ -217,22 +215,19 @@ export function Navbar({ onScrollTo }: NavbarProps) {
                       <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
                     <Button variant="ghost" asChild className={mobileNavClass} onClick={() => setIsOpen(false)}>
-                      <Link href="/cuenta/pedidos">Mis pedidos</Link>
+                      <Link href="/cuenta/pedidos"><Package className="h-4 w-4 mr-2" />Mis pedidos</Link>
                     </Button>
                     {user.role === "ADMIN" && (
                       <Button variant="ghost" asChild className={mobileNavClass} onClick={() => setIsOpen(false)}>
-                        <Link href="/admin/pedidos">Panel admin</Link>
+                        <Link href="/admin"><ShieldCheck className="h-4 w-4 mr-2" />Panel admin</Link>
                       </Button>
                     )}
                     <Button
                       variant="ghost"
                       className={`${mobileNavClass} text-destructive hover:text-destructive`}
-                      onClick={async () => {
-                        setIsOpen(false)
-                        await logout()
-                      }}
+                      onClick={async () => { setIsOpen(false); await logout() }}
                     >
-                      Cerrar sesión
+                      <LogOut className="h-4 w-4 mr-2" />Cerrar sesión
                     </Button>
                   </>
                 ) : (
