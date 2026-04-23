@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
+import { prisma } from "@/lib/prisma"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-01-27.acacia",
@@ -7,7 +8,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(req: NextRequest) {
   const body = await req.text()
-  const sig = req.headers.get("stripe-signature")!
+  const sig  = req.headers.get("stripe-signature")!
 
   let event: Stripe.Event
   try {
@@ -16,17 +17,78 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Webhook signature invalid" }, { status: 400 })
   }
 
-  switch (event.type) {
-    case "payment_intent.succeeded": {
-      const pi = event.data.object as Stripe.PaymentIntent
-      // Aquí: guardar pedido en BD, enviar email de confirmación, etc.
-      console.log("✅ Pago completado:", pi.id, "— MXN", (pi.amount / 100).toFixed(2))
-      break
+  // ── checkout.session.completed ────────────────────────────────────────────
+  // Este es el evento correcto para Checkout Sessions (no payment_intent)
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as Stripe.Checkout.Session
+
+    if (session.payment_status !== "paid") {
+      // Pago pendiente (ej. OXXO) — no marcar como pagado aún
+      return NextResponse.json({ received: true })
     }
-    case "payment_intent.payment_failed": {
-      const pi = event.data.object as Stripe.PaymentIntent
-      console.log("❌ Pago fallido:", pi.id)
-      break
+
+    const folio   = session.metadata?.folio
+    const paymentId = typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent?.id ?? null
+
+    if (!folio) {
+      console.error("[stripe-webhook] No folio in metadata", session.id)
+      return NextResponse.json({ received: true })
+    }
+
+    // Verificar que el pago SÍ fue aprobado por Stripe antes de actualizar
+    if (paymentId) {
+      const pi = await stripe.paymentIntents.retrieve(paymentId)
+      if (pi.status !== "succeeded") {
+        console.warn("[stripe-webhook] PaymentIntent not succeeded:", pi.status)
+        return NextResponse.json({ received: true })
+      }
+    }
+
+    await prisma.order.update({
+      where:  { folio },
+      data: {
+        status:         "PAID",
+        stripePaymentId: paymentId,
+        paidAt:          new Date(),
+      },
+    })
+
+    console.log(`✅ Pedido ${folio} marcado como PAGADO — PI: ${paymentId}`)
+  }
+
+  // ── checkout.session.async_payment_succeeded (OXXO, etc.) ─────────────────
+  if (event.type === "checkout.session.async_payment_succeeded") {
+    const session = event.data.object as Stripe.Checkout.Session
+    const folio   = session.metadata?.folio
+    const paymentId = typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent?.id ?? null
+
+    if (folio) {
+      await prisma.order.update({
+        where: { folio },
+        data: {
+          status:          "PAID",
+          stripePaymentId: paymentId,
+          paidAt:          new Date(),
+        },
+      })
+      console.log(`✅ Pago async exitoso — Pedido ${folio}`)
+    }
+  }
+
+  // ── checkout.session.async_payment_failed ─────────────────────────────────
+  if (event.type === "checkout.session.async_payment_failed") {
+    const session = event.data.object as Stripe.Checkout.Session
+    const folio   = session.metadata?.folio
+    if (folio) {
+      await prisma.order.update({
+        where: { folio },
+        data:  { status: "CANCELLED" },
+      })
+      console.log(`❌ Pago async fallido — Pedido ${folio} cancelado`)
     }
   }
 
