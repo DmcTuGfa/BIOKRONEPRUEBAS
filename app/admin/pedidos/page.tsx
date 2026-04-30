@@ -198,7 +198,7 @@ function OrderModal({
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Productos</p>
             <div className="space-y-2 rounded-lg border border-border overflow-hidden">
               {(order.items || []).map((item: any, i: number) => (
-                <div key={item.id} className={`flex items-center gap-3 px-3 py-2.5 ${i < order.items.length - 1 ? "border-b border-border" : ""}`}>
+                <div key={item.id} className={`flex items-center gap-3 px-3 py-2.5 ${i < (order.items?.length ?? 0) - 1 ? "border-b border-border" : ""}`}>
                   <div className="relative w-10 h-10 rounded-md overflow-hidden bg-muted border border-border flex-shrink-0">
                     <Image src={item.image || "/placeholder.jpg"} alt={item.name} fill className="object-cover" sizes="40px"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
