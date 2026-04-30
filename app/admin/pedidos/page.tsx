@@ -16,10 +16,10 @@ import { useAuth } from "@/contexts/auth-context"
 import {
   Loader2, Package, MapPin, CreditCard, Truck, Save,
   Clock, Search, CheckCircle2, XCircle, AlertCircle,
-  ExternalLink, RefreshCw, ChevronRight, X
+  ExternalLink, RefreshCw, ChevronRight
 } from "lucide-react"
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const STATUS_LABELS: Record<string, { label: string; color: string; icon: any }> = {
   PENDING:    { label: "Pendiente",   color: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/30", icon: Clock },
@@ -31,17 +31,25 @@ const STATUS_LABELS: Record<string, { label: string; color: string; icon: any }>
   REFUNDED:   { label: "Reembolsado", color: "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/30",         icon: AlertCircle },
 }
 
+const SHIPPING_STATUS_LABELS: Record<string, string> = {
+  PENDIENTE:   "Pendiente",
+  PREPARANDO:  "Preparando",
+  ENVIADO:     "Enviado",
+  EN_TRANSITO: "En tránsito",
+  ENTREGADO:   "Entregado",
+}
+
 const CARRIERS = ["DHL", "FedEx", "Estafeta", "Paquetexpress", "99 Minutos", "Redpack", "Otro"]
 
 const CARRIER_URLS: Record<string, string> = {
-  DHL:         "https://www.dhl.com/mx-es/home/tracking.html?tracking-id=",
-  FedEx:       "https://www.fedex.com/apps/fedextrack/?tracknumbers=",
-  Estafeta:    "https://www.estafeta.com/herramientas/rastreo?wayBillType=0&waybill=",
+  DHL:          "https://www.dhl.com/mx-es/home/tracking.html?tracking-id=",
+  FedEx:        "https://www.fedex.com/apps/fedextrack/?tracknumbers=",
+  Estafeta:     "https://www.estafeta.com/herramientas/rastreo?wayBillType=0&waybill=",
   Paquetexpress:"https://www.paquetexpress.com.mx/rastreo?guia=",
-  Redpack:     "https://www.redpack.com.mx/es/rastreo/?guia=",
+  Redpack:      "https://www.redpack.com.mx/es/rastreo/?guia=",
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmt(d: string) {
   return new Date(d).toLocaleString("es-MX", {
@@ -52,7 +60,7 @@ function fmt(d: string) {
 function fmtMXN(c: number) {
   return `$${(c / 100).toLocaleString("es-MX", { minimumFractionDigits: 2 })}`
 }
-function trackingUrl(carrier: string, number: string) {
+function autoTrackingUrl(carrier: string, number: string) {
   const base = CARRIER_URLS[carrier]
   return base ? base + encodeURIComponent(number) : "#"
 }
@@ -60,77 +68,92 @@ function trackingUrl(carrier: string, number: string) {
 // ─── Order Detail Modal ───────────────────────────────────────────────────────
 
 function OrderModal({
-  order,
-  open,
-  onClose,
-  onUpdated,
+  order, open, onClose, onUpdated,
 }: {
   order: any
   open: boolean
   onClose: () => void
   onUpdated: (updated: any) => void
 }) {
-  const [saving, setSaving]         = useState(false)
-  const [tracking, setTracking]     = useState(order.trackingNumber || "")
-  const [carrier, setCarrier]       = useState(order.shippingCarrier || "")
-  const [status, setStatus]         = useState(order.status)
-  const [trackInfo, setTrackInfo]   = useState<any>(null)
+  const [saving, setSaving]           = useState(false)
+  const [tracking, setTracking]       = useState(order.trackingNumber || "")
+  const [trackingUrl, setTrackingUrl] = useState(order.trackingUrl || "")
+  const [carrier, setCarrier]         = useState(order.shippingCarrier || "")
+  const [status, setStatus]           = useState(order.status)
+  const [shippingStatus, setShippingStatus] = useState(order.shippingStatus || "PENDIENTE")
+  const [trackInfo, setTrackInfo]     = useState<any>(null)
   const [trackLoading, setTrackLoading] = useState(false)
-  const [saveMsg, setSaveMsg]       = useState("")
+  const [saveMsg, setSaveMsg]         = useState("")
 
-  // Reset when order changes
   useEffect(() => {
     setTracking(order.trackingNumber || "")
+    setTrackingUrl(order.trackingUrl || "")
     setCarrier(order.shippingCarrier || "")
     setStatus(order.status)
+    setShippingStatus(order.shippingStatus || "PENDIENTE")
     setTrackInfo(null)
     setSaveMsg("")
   }, [order.id])
 
+  // Auto-generar URL de tracking cuando cambia carrier + número
+  useEffect(() => {
+    if (carrier && tracking && !trackingUrl) {
+      const auto = autoTrackingUrl(carrier, tracking)
+      if (auto !== "#") setTrackingUrl(auto)
+    }
+  }, [carrier, tracking])
+
   const save = async () => {
     setSaving(true)
     setSaveMsg("")
-    const res = await fetch(`/api/admin/orders/${order.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    try {
+      const payload: any = {
         status,
         trackingNumber:  tracking.trim() || null,
         shippingCarrier: carrier || null,
-      }),
-    })
-    const updated = await res.json()
-    setSaving(false)
-    if (res.ok) {
-      setSaveMsg(
-        tracking && updated.status === "SHIPPED"
-          ? "✅ Guardado — pedido marcado como Enviado automáticamente"
-          : "✅ Cambios guardados"
-      )
-      setStatus(updated.status)
-      onUpdated(updated)
-      setTimeout(() => setSaveMsg(""), 4000)
-    } else {
-      setSaveMsg("❌ Error al guardar")
+        shippingStatus,
+        trackingUrl:     trackingUrl.trim() || null,
+      }
+      const res = await fetch(`/api/admin/orders/${order.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      const updated = await res.json()
+      setSaving(false)
+      if (res.ok) {
+        setStatus(updated.status)
+        setShippingStatus(updated.shippingStatus || "PENDIENTE")
+        onUpdated(updated)
+        setSaveMsg("✅ Cambios guardados correctamente")
+        setTimeout(() => setSaveMsg(""), 4000)
+      } else {
+        setSaveMsg(`❌ ${updated.error || "Error al guardar"}`)
+      }
+    } catch {
+      setSaving(false)
+      setSaveMsg("❌ Error de red al guardar")
     }
   }
 
   const fetchTracking = async () => {
     if (!carrier || !tracking) return
     setTrackLoading(true)
-    const res = await fetch(
-      `/api/admin/tracking?carrier=${encodeURIComponent(carrier)}&number=${encodeURIComponent(tracking)}`
-    )
-    const data = await res.json()
-    setTrackInfo(data)
+    try {
+      const res = await fetch(
+        `/api/admin/tracking?carrier=${encodeURIComponent(carrier)}&number=${encodeURIComponent(tracking)}`
+      )
+      const data = await res.json()
+      setTrackInfo(data)
+    } catch {
+      setTrackInfo({ status: "MANUAL", statusLabel: "Error al consultar", events: [], carrier, trackingUrl: "#" })
+    }
     setTrackLoading(false)
   }
 
   const st = STATUS_LABELS[status] || { label: status, color: "", icon: Clock }
   const StatusIcon = st.icon
-
-  const isPaid     = ["PAID","PROCESSING","SHIPPED","DELIVERED"].includes(status)
-  const isShipped  = ["SHIPPED","DELIVERED"].includes(status)
+  const isPaid = ["PAID","PROCESSING","SHIPPED","DELIVERED"].includes(status)
 
   return (
     <Dialog open={open} onOpenChange={o => !o && onClose()}>
@@ -142,16 +165,13 @@ function OrderModal({
               <StatusIcon className="h-3 w-3 mr-1" />
               {st.label}
             </Badge>
-            {/* Verificación de pago */}
             {isPaid ? (
               <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 font-medium">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Pago verificado por Stripe
+                <CheckCircle2 className="h-3.5 w-3.5" />Pago verificado
               </span>
             ) : (
               <span className="flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400 font-medium">
-                <AlertCircle className="h-3.5 w-3.5" />
-                Pago pendiente de confirmación
+                <AlertCircle className="h-3.5 w-3.5" />Pago pendiente
               </span>
             )}
           </DialogTitle>
@@ -159,7 +179,7 @@ function OrderModal({
 
         <div className="space-y-6 pt-2">
 
-          {/* ── Cliente + fecha ── */}
+          {/* Cliente + fecha */}
           <div className="flex flex-wrap gap-4 text-sm">
             <div className="flex-1 min-w-[180px]">
               <p className="text-xs text-muted-foreground mb-1">Cliente</p>
@@ -173,32 +193,21 @@ function OrderModal({
             </div>
           </div>
 
-          {/* ── Productos ── */}
+          {/* Productos */}
           <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-              Productos pedidos
-            </p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Productos</p>
             <div className="space-y-2 rounded-lg border border-border overflow-hidden">
-              {order.items.map((item: any, i: number) => (
-                <div
-                  key={item.id}
-                  className={`flex items-center gap-3 px-3 py-2.5 ${
-                    i < order.items.length - 1 ? "border-b border-border" : ""
-                  }`}
-                >
+              {(order.items || []).map((item: any, i: number) => (
+                <div key={item.id} className={`flex items-center gap-3 px-3 py-2.5 ${i < order.items.length - 1 ? "border-b border-border" : ""}`}>
                   <div className="relative w-10 h-10 rounded-md overflow-hidden bg-muted border border-border flex-shrink-0">
-                    <Image
-                      src={item.image} alt={item.name} fill className="object-cover" sizes="40px"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
-                    />
+                    <Image src={item.image || "/placeholder.jpg"} alt={item.name} fill className="object-cover" sizes="40px"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
                     <p className="text-xs text-muted-foreground">×{item.quantity} · {fmtMXN(item.priceMxn)} c/u</p>
                   </div>
-                  <p className="text-sm font-semibold text-foreground shrink-0">
-                    {fmtMXN(item.priceMxn * item.quantity)}
-                  </p>
+                  <p className="text-sm font-semibold text-foreground shrink-0">{fmtMXN(item.priceMxn * item.quantity)}</p>
                 </div>
               ))}
               <div className="flex justify-between px-3 py-2.5 bg-muted/40 border-t border-border">
@@ -208,52 +217,31 @@ function OrderModal({
             </div>
           </div>
 
-          {/* ── Pago ── */}
+          {/* Estado del pago */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-1">
               <CreditCard className="h-3.5 w-3.5" /> Estado del pago
             </p>
-            <div className="rounded-lg border border-border overflow-hidden">
-              <div className="grid grid-cols-2 divide-x divide-border">
-                <div className="p-3">
-                  <p className="text-xs text-muted-foreground mb-1">Estado</p>
-                  {isPaid ? (
-                    <p className="text-sm font-semibold text-green-600 dark:text-green-400 flex items-center gap-1">
-                      <CheckCircle2 className="h-4 w-4" /> Aprobado por Stripe
-                    </p>
-                  ) : (
-                    <p className="text-sm font-semibold text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
-                      <AlertCircle className="h-4 w-4" /> No confirmado
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {isPaid
-                      ? "Stripe verificó y procesó el pago correctamente."
-                      : "El cliente aún no completó el pago en Stripe."}
-                  </p>
-                </div>
-                <div className="p-3 space-y-1.5">
-                  {order.stripePaymentId && (
-                    <div>
-                      <p className="text-xs text-muted-foreground">ID de pago Stripe</p>
-                      <p className="text-xs font-mono text-foreground break-all">{order.stripePaymentId}</p>
-                    </div>
-                  )}
-                  {order.paidAt && (
-                    <div>
-                      <p className="text-xs text-muted-foreground">Confirmado el</p>
-                      <p className="text-xs text-foreground">{fmt(order.paidAt)}</p>
-                    </div>
-                  )}
-                  {!order.stripePaymentId && (
-                    <p className="text-xs text-muted-foreground italic">Sin ID de pago aún</p>
-                  )}
-                </div>
-              </div>
+            <div className="rounded-lg border border-border p-3 text-sm space-y-1">
+              {isPaid ? (
+                <p className="font-semibold text-green-600 dark:text-green-400 flex items-center gap-1">
+                  <CheckCircle2 className="h-4 w-4" /> Aprobado por Stripe
+                </p>
+              ) : (
+                <p className="font-semibold text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" /> Pendiente de confirmación
+                </p>
+              )}
+              {order.stripePaymentId && (
+                <p className="text-xs font-mono text-muted-foreground">{order.stripePaymentId}</p>
+              )}
+              {order.paidAt && (
+                <p className="text-xs text-muted-foreground">Confirmado el {fmt(order.paidAt)}</p>
+              )}
             </div>
           </div>
 
-          {/* ── Dirección ── */}
+          {/* Dirección */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-1">
               <MapPin className="h-3.5 w-3.5" /> Dirección de entrega
@@ -261,25 +249,18 @@ function OrderModal({
             <div className="bg-muted/40 rounded-lg border border-border p-3 text-sm">
               <p className="font-medium text-foreground">{order.shippingName}</p>
               <p className="text-muted-foreground">{order.shippingStreet}</p>
-              <p className="text-muted-foreground">
-                {order.shippingCity}, {order.shippingState} {order.shippingPostal}
-              </p>
+              <p className="text-muted-foreground">{order.shippingCity}, {order.shippingState} {order.shippingPostal}</p>
               <p className="text-muted-foreground">{order.shippingCountry}</p>
             </div>
           </div>
 
-          {/* ── Guía de envío ── */}
+          {/* Gestión de envío */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-1">
-              <Truck className="h-3.5 w-3.5" /> Guía de envío
-              {isShipped && (
-                <span className="ml-1 text-xs font-normal text-orange-600 dark:text-orange-400">
-                  (enviado)
-                </span>
-              )}
+              <Truck className="h-3.5 w-3.5" /> Gestión de envío
             </p>
-
             <div className="space-y-3">
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Paquetería</p>
@@ -293,36 +274,40 @@ function OrderModal({
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Número de guía</p>
-                  <Input
-                    className="h-9 text-sm font-mono"
-                    value={tracking}
-                    onChange={e => setTracking(e.target.value)}
-                    placeholder="ej. 1234567890"
-                  />
+                  <Input className="h-9 text-sm font-mono" value={tracking} onChange={e => setTracking(e.target.value)} placeholder="ej. 1234567890" />
                 </div>
               </div>
 
-              {/* Estado select */}
               <div>
-                <p className="text-xs text-muted-foreground mb-1">
-                  Estado del pedido
-                  {tracking && !["SHIPPED","DELIVERED","CANCELLED","REFUNDED"].includes(status) && (
-                    <span className="ml-1 text-orange-500 font-medium">
-                      · Al guardar con guía se marcará como Enviado automáticamente
-                    </span>
-                  )}
-                </p>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(STATUS_LABELS).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <p className="text-xs text-muted-foreground mb-1">URL de rastreo (se genera automático)</p>
+                <Input className="h-9 text-sm font-mono" value={trackingUrl} onChange={e => setTrackingUrl(e.target.value)} placeholder="https://..." />
               </div>
 
-              {/* Save button */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Estado del pedido</p>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(STATUS_LABELS).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Estado de envío</p>
+                  <Select value={shippingStatus} onValueChange={setShippingStatus}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(SHIPPING_STATUS_LABELS).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div className="flex items-center gap-3 flex-wrap">
                 <Button onClick={save} disabled={saving} size="sm" className="h-9">
                   {saving
@@ -332,26 +317,15 @@ function OrderModal({
                 </Button>
 
                 {tracking && carrier && (
-                  <a
-                    href={trackingUrl(carrier, tracking)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-sm text-primary hover:underline"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    Rastrear en {carrier}
+                  <a href={trackingUrl || autoTrackingUrl(carrier, tracking)} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-sm text-primary hover:underline">
+                    <ExternalLink className="h-3.5 w-3.5" />Rastrear en {carrier}
                   </a>
                 )}
 
                 {tracking && carrier && ["DHL","Estafeta"].includes(carrier) && (
-                  <Button
-                    variant="outline" size="sm" className="h-9"
-                    onClick={fetchTracking} disabled={trackLoading}
-                  >
-                    {trackLoading
-                      ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
-                      : <RefreshCw className="h-3.5 w-3.5 mr-1" />
-                    }
+                  <Button variant="outline" size="sm" className="h-9" onClick={fetchTracking} disabled={trackLoading}>
+                    {trackLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
                     Ver rastreo aquí
                   </Button>
                 )}
@@ -363,7 +337,6 @@ function OrderModal({
                 </p>
               )}
 
-              {/* Tracking info panel */}
               {trackInfo && (
                 <div className="rounded-lg border border-border overflow-hidden mt-2">
                   <div className="flex items-center justify-between px-3 py-2 bg-muted/50 border-b border-border">
@@ -377,30 +350,15 @@ function OrderModal({
                       </p>
                     )}
                   </div>
-                  {trackInfo.status === "MANUAL" ? (
-                    <div className="px-3 py-3">
-                      <p className="text-sm text-muted-foreground">
-                        {trackInfo.statusLabel}
-                        {trackInfo.trackingUrl !== "#" && (
-                          <>. {" "}
-                            <a href={trackInfo.trackingUrl} target="_blank" rel="noopener noreferrer"
-                              className="text-primary hover:underline">
-                              Abrir en {trackInfo.carrier} ↗
-                            </a>
-                          </>
-                        )}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {["DHL"].includes(carrier)
-                          ? "Para ver eventos en tiempo real configura DHL_API_KEY en tus variables de entorno."
-                          : "Para ver eventos en tiempo real configura las credenciales de API de la paquetería."}
-                      </p>
-                    </div>
-                  ) : trackInfo.events.length === 0 ? (
-                    <p className="text-sm text-muted-foreground px-3 py-3">Sin eventos registrados aún.</p>
+                  {trackInfo.events?.length === 0 ? (
+                    <p className="text-sm text-muted-foreground px-3 py-3">
+                      {trackInfo.status === "MANUAL"
+                        ? `Consulta directo en el sitio de ${trackInfo.carrier}.`
+                        : "Sin eventos registrados aún."}
+                    </p>
                   ) : (
                     <div className="divide-y divide-border max-h-48 overflow-y-auto">
-                      {trackInfo.events.map((ev: any, i: number) => (
+                      {(trackInfo.events || []).map((ev: any, i: number) => (
                         <div key={i} className="px-3 py-2 flex gap-3">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
                           <div>
@@ -422,9 +380,7 @@ function OrderModal({
           {order.notes && (
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Notas del cliente</p>
-              <p className="text-sm text-muted-foreground bg-muted/40 rounded-lg border border-border px-3 py-2">
-                {order.notes}
-              </p>
+              <p className="text-sm text-muted-foreground bg-muted/40 rounded-lg border border-border px-3 py-2">{order.notes}</p>
             </div>
           )}
         </div>
@@ -433,7 +389,7 @@ function OrderModal({
   )
 }
 
-// ─── Order Row (list item) ────────────────────────────────────────────────────
+// ─── Order Row ────────────────────────────────────────────────────────────────
 
 function OrderRow({ order, onClick }: { order: any; onClick: () => void }) {
   const st = STATUS_LABELS[order.status] || { label: order.status, color: "", icon: Clock }
@@ -441,18 +397,14 @@ function OrderRow({ order, onClick }: { order: any; onClick: () => void }) {
   const isPaid = ["PAID","PROCESSING","SHIPPED","DELIVERED"].includes(order.status)
 
   return (
-    <Card
-      className="cursor-pointer hover:border-primary/40 hover:bg-muted/30 transition-colors"
-      onClick={onClick}
-    >
+    <Card className="cursor-pointer hover:border-primary/40 hover:bg-muted/30 transition-colors" onClick={onClick}>
       <CardContent className="p-4">
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <span className="text-sm font-mono font-semibold text-primary">{order.folio}</span>
               <Badge variant="outline" className={`text-xs ${st.color}`}>
-                <StatusIcon className="h-3 w-3 mr-0.5" />
-                {st.label}
+                <StatusIcon className="h-3 w-3 mr-0.5" />{st.label}
               </Badge>
               {isPaid && (
                 <span className="flex items-center gap-0.5 text-xs text-green-600 dark:text-green-400">
@@ -466,9 +418,7 @@ function OrderRow({ order, onClick }: { order: any; onClick: () => void }) {
                 </Badge>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              {order.user?.name} · {order.user?.email}
-            </p>
+            <p className="text-xs text-muted-foreground">{order.user?.name} · {order.user?.email}</p>
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
               <Clock className="h-3 w-3" /> {fmt(order.createdAt)}
             </p>
@@ -487,30 +437,39 @@ function OrderRow({ order, onClick }: { order: any; onClick: () => void }) {
 
 export default function AdminPedidosPage() {
   const { user, loading: authLoading } = useAuth()
-  const [orders, setOrders]           = useState<any[]>([])
-  const [total, setTotal]             = useState(0)
-  const [loading, setLoading]         = useState(true)
+  const [orders, setOrders]   = useState<any[]>([])
+  const [total, setTotal]     = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState<string | null>(null)
   const [filterStatus, setFilterStatus] = useState("all")
-  const [search, setSearch]           = useState("")
-  const [page, setPage]               = useState(1)
-  const [pages, setPages]             = useState(1)
-  const [selected, setSelected]       = useState<any>(null)
+  const [search, setSearch]   = useState("")
+  const [page, setPage]       = useState(1)
+  const [pages, setPages]     = useState(1)
+  const [selected, setSelected] = useState<any>(null)
 
   const fetchOrders = useCallback(async () => {
     setLoading(true)
-    const params = new URLSearchParams({ page: String(page) })
-    if (filterStatus !== "all") params.set("status", filterStatus)
-    const res  = await fetch(`/api/admin/orders?${params}`)
-    const data = await res.json()
-    setOrders(data.orders || [])
-    setTotal(data.total || 0)
-    setPages(data.pages || 1)
-    setLoading(false)
+    setError(null)
+    try {
+      const params = new URLSearchParams({ page: String(page) })
+      if (filterStatus !== "all") params.set("status", filterStatus)
+      const res  = await fetch(`/api/admin/orders?${params}`)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Error al cargar")
+      setOrders(data.orders || [])
+      setTotal(data.total || 0)
+      setPages(data.pages || 1)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error desconocido")
+    } finally {
+      setLoading(false)
+    }
   }, [page, filterStatus])
 
-  useEffect(() => { if (user?.role === "ADMIN") fetchOrders() }, [user, fetchOrders])
+  useEffect(() => {
+    if (user?.role === "ADMIN") fetchOrders()
+  }, [user, fetchOrders])
 
-  // Update the order in the list when saved from modal
   const handleOrderUpdated = (updated: any) => {
     setOrders(prev => prev.map(o => o.id === updated.id ? { ...o, ...updated } : o))
     setSelected((prev: any) => prev?.id === updated.id ? { ...prev, ...updated } : prev)
@@ -525,12 +484,21 @@ export default function AdminPedidosPage() {
       )
     : orders
 
-  if (authLoading) return null
-  if (!user || user.role !== "ADMIN") return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-muted-foreground">Acceso denegado</p>
-    </div>
-  )
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (!user || user.role !== "ADMIN") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Acceso denegado</p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-muted/30">
@@ -538,7 +506,6 @@ export default function AdminPedidosPage() {
       <main className="flex-1">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
 
-          {/* Header */}
           <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
             <div>
               <h1 className="text-2xl font-bold text-foreground">Pedidos</h1>
@@ -558,16 +525,10 @@ export default function AdminPedidosPage() {
             </div>
           </div>
 
-          {/* Filters */}
           <div className="flex gap-3 mb-5 flex-wrap">
             <div className="relative flex-1 min-w-[180px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                className="pl-9 h-9"
-                placeholder="Buscar folio, cliente, guía..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
+              <Input className="pl-9 h-9" placeholder="Buscar folio, cliente, guía..." value={search} onChange={e => setSearch(e.target.value)} />
             </div>
             <Select value={filterStatus} onValueChange={v => { setFilterStatus(v); setPage(1) }}>
               <SelectTrigger className="w-48 h-9"><SelectValue /></SelectTrigger>
@@ -584,6 +545,12 @@ export default function AdminPedidosPage() {
             <div className="flex justify-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
+          ) : error ? (
+            <div className="text-center py-20">
+              <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+              <p className="text-muted-foreground mb-4">{error}</p>
+              <Button onClick={fetchOrders}>Reintentar</Button>
+            </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-20">
               <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -599,19 +566,14 @@ export default function AdminPedidosPage() {
 
           {pages > 1 && (
             <div className="flex justify-center gap-2 pt-6">
-              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
-                Anterior
-              </Button>
+              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Anterior</Button>
               <span className="text-sm text-muted-foreground flex items-center px-3">{page} / {pages}</span>
-              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages}>
-                Siguiente
-              </Button>
+              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages}>Siguiente</Button>
             </div>
           )}
         </div>
       </main>
 
-      {/* Detail Modal */}
       {selected && (
         <OrderModal
           order={selected}

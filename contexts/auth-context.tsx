@@ -69,6 +69,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" })
     setUser(null)
+    // Limpiar carrito del localStorage al cerrar sesión
+    try {
+      localStorage.removeItem("biokrone_cart")
+      sessionStorage.removeItem("biokrone_cart")
+    } catch {}
     window.location.href = "/"
   }
 

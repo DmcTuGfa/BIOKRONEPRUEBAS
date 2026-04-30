@@ -1,14 +1,13 @@
 import Link from "next/link"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
+import { CartCleaner } from "@/components/cart-cleaner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle2, ArrowRight, Package, Mail, ReceiptText } from "lucide-react"
 
 type SuccessPageProps = {
-  searchParams?: {
-    folio?: string
-  }
+  searchParams?: { folio?: string }
 }
 
 export default function SuccessPage({ searchParams }: SuccessPageProps) {
@@ -16,6 +15,7 @@ export default function SuccessPage({ searchParams }: SuccessPageProps) {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <CartCleaner />
       <Navbar />
       <main className="flex-1 flex items-center justify-center bg-muted/30 py-20">
         <div className="container mx-auto px-4 max-w-lg">
@@ -40,14 +40,17 @@ export default function SuccessPage({ searchParams }: SuccessPageProps) {
                 <Mail className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-foreground">Revisa tu correo</p>
-                  <p className="text-xs text-muted-foreground">Te enviamos la confirmación y podrás revisar el pedido en tu cuenta.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Te enviamos la confirmación y podrás revisar el pedido en tu cuenta.
+                  </p>
                 </div>
               </div>
 
               <div className="flex flex-col gap-3">
                 <Button asChild className="gap-2">
                   <Link href="/cuenta/pedidos">
-                    <Package className="h-4 w-4" />Ver mis pedidos<ArrowRight className="h-4 w-4" />
+                    <Package className="h-4 w-4" />Ver mis pedidos
+                    <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
                 <Button asChild variant="outline">
