@@ -1,18 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Menu, X, Leaf, ShoppingCart, User, Package, LogOut, ShieldCheck, ChevronDown } from "lucide-react"
 import { ThemeToggle } from "./theme-toggle"
 import { useCart } from "@/contexts/cart-context"
@@ -24,10 +16,23 @@ interface NavbarProps {
 
 export function Navbar({ onScrollTo }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [dropOpen, setDropOpen] = useState(false)
+  const dropRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
   const isHomePage = pathname === "/"
   const { totalItems } = useCart()
   const { user, loading, logout } = useAuth()
+
+  // Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropRef.current && !dropRef.current.contains(e.target as Node)) {
+        setDropOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [])
 
   const navItems = [
     { label: "Inicio",    href: "/",          section: "hero" },
@@ -65,7 +70,6 @@ export function Navbar({ onScrollTo }: NavbarProps) {
               const isActive = item.href === "/"
                 ? pathname === "/"
                 : pathname.startsWith(item.href.split("#")[0]) && item.href !== "/"
-
               if (isHomePage && item.section && item.href.includes("#")) {
                 return (
                   <Button key={item.section} variant="ghost" onClick={() => handleNavClick(item)} className={desktopNavClass(isActive)}>
@@ -81,7 +85,7 @@ export function Navbar({ onScrollTo }: NavbarProps) {
             })}
           </div>
 
-          {/* Desktop right actions */}
+          {/* Desktop right */}
           <div className="hidden md:flex items-center gap-2">
             <ThemeToggle />
 
@@ -112,40 +116,52 @@ export function Navbar({ onScrollTo }: NavbarProps) {
                   </Button>
                 )}
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="gap-2 max-w-[220px] h-9">
-                      <User className="h-4 w-4 shrink-0" />
-                      <span className="truncate text-sm">{user.name}</span>
-                      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>
-                      <div className="flex flex-col">
-                        <span className="font-medium truncate">{user.name}</span>
-                        <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+                {/* Dropdown manual — reemplaza Radix DropdownMenu */}
+                <div className="relative" ref={dropRef}>
+                  <Button
+                    variant="outline"
+                    className="gap-2 max-w-[220px] h-9"
+                    onClick={() => setDropOpen(o => !o)}
+                  >
+                    <User className="h-4 w-4 shrink-0" />
+                    <span className="truncate text-sm">{user.name}</span>
+                    <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${dropOpen ? "rotate-180" : ""}`} />
+                  </Button>
+
+                  {dropOpen && (
+                    <div className="absolute right-0 top-full mt-1 w-56 rounded-md border border-border bg-background shadow-lg z-[999]">
+                      <div className="px-3 py-2 border-b border-border">
+                        <p className="font-medium text-sm text-foreground truncate">{user.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                       </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/cuenta/pedidos" className="cursor-pointer">
-                        <Package className="h-4 w-4 mr-2" />Mis pedidos
-                      </Link>
-                    </DropdownMenuItem>
-                    {user.role === "ADMIN" && (
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin" className="cursor-pointer">
-                          <ShieldCheck className="h-4 w-4 mr-2" />Panel admin
+                      <div className="py-1">
+                        <Link
+                          href="/cuenta/pedidos"
+                          onClick={() => setDropOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                        >
+                          <Package className="h-4 w-4" />Mis pedidos
                         </Link>
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => logout()} className="cursor-pointer text-destructive focus:text-destructive">
-                      <LogOut className="h-4 w-4 mr-2" />Cerrar sesión
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                        {user.role === "ADMIN" && (
+                          <Link
+                            href="/admin"
+                            onClick={() => setDropOpen(false)}
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                          >
+                            <ShieldCheck className="h-4 w-4" />Panel admin
+                          </Link>
+                        )}
+                        <div className="my-1 border-t border-border" />
+                        <button
+                          onClick={() => { setDropOpen(false); logout() }}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors w-full text-left"
+                        >
+                          <LogOut className="h-4 w-4" />Cerrar sesión
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <>
@@ -172,7 +188,6 @@ export function Navbar({ onScrollTo }: NavbarProps) {
                 )}
               </Link>
             </Button>
-            {/* Cerrar sesión directo en mobile si está logueado */}
             {user && (
               <Button
                 variant="ghost" size="icon"
