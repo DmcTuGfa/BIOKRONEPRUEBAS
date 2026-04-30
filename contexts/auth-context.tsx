@@ -30,7 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await fetch("/api/auth/me", { cache: "no-store" })
       const data = await res.json()
-      setUser(data.user)
+      // Siempre usar null cuando no hay usuario, nunca undefined
+      setUser(data.user ?? null)
     } catch {
       setUser(null)
     } finally {
@@ -41,33 +42,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => { refresh() }, [refresh])
 
   const login = async (email: string, password: string) => {
-    const res = await fetch("/api/auth/login", {
-      cache: "no-store",
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    })
-    const data = await res.json()
-    if (!res.ok) return { error: data.error }
-    setUser(data.user)
-    return { user: data.user }
+    try {
+      const res = await fetch("/api/auth/login", {
+        cache: "no-store",
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) return { error: data.error }
+      setUser(data.user ?? null)
+      return { user: data.user ?? null }
+    } catch {
+      return { error: "Error de red al iniciar sesión" }
+    }
   }
 
   const register = async (name: string, email: string, password: string, phone?: string) => {
-    const res = await fetch("/api/auth/register", {
-      cache: "no-store",
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, phone }),
-    })
-    const data = await res.json()
-    if (!res.ok) return { error: data.error }
-    setUser(data.user)
-    return { user: data.user }
+    try {
+      const res = await fetch("/api/auth/register", {
+        cache: "no-store",
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password, phone }),
+      })
+      const data = await res.json()
+      if (!res.ok) return { error: data.error }
+      setUser(data.user ?? null)
+      return { user: data.user ?? null }
+    } catch {
+      return { error: "Error de red al registrarse" }
+    }
   }
 
   const logout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" })
+    try {
+      await fetch("/api/auth/logout", { method: "POST" })
+    } catch {}
     setUser(null)
     // Limpiar carrito del localStorage al cerrar sesión
     try {

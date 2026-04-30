@@ -11,11 +11,15 @@ const PUBLIC_PATHS = [
   "/auth/verify-email",
   "/auth/forgot-password",
   "/auth/reset-password",
+  // Auth API — estas rutas verifican la sesión internamente
   "/api/auth/login",
   "/api/auth/register",
+  "/api/auth/logout",
+  "/api/auth/me",          // ← FALTABA: el middleware lo bloqueaba antes de que llegara a la ruta
   "/api/auth/verify-email",
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
+  // Webhooks y productos públicos
   "/api/webhooks/stripe",
   "/api/products",
 ]
@@ -23,7 +27,7 @@ const PUBLIC_PATHS = [
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Allow public paths and static files
+  // Permitir paths públicos y archivos estáticos
   if (
     PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith(p + "/")) ||
     pathname.startsWith("/_next") ||
@@ -48,15 +52,21 @@ export async function middleware(req: NextRequest) {
 
   const session = await verifyToken(token)
   if (!session) {
+    // Token inválido o expirado — limpiar cookie y redirigir
     if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Sesión inválida" }, { status: 401 })
+      const res = NextResponse.json({ error: "Sesión inválida o expirada" }, { status: 401 })
+      res.cookies.delete("bk_session")
+      return res
     }
     const url = req.nextUrl.clone()
     url.pathname = "/auth/login"
-    return NextResponse.redirect(url)
+    url.searchParams.set("redirect", pathname)
+    const res = NextResponse.redirect(url)
+    res.cookies.delete("bk_session")
+    return res
   }
 
-  // Admin-only routes
+  // Rutas solo para ADMIN
   if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
     if (session.role !== "ADMIN") {
       if (pathname.startsWith("/api/")) {
@@ -66,7 +76,7 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // Inject user info into headers for server components
+  // Inyectar info del usuario en headers para server components
   const res = NextResponse.next()
   res.headers.set("x-user-id", session.userId)
   res.headers.set("x-user-role", session.role)

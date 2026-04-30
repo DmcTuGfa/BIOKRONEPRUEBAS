@@ -22,14 +22,6 @@ enum OrderStatus {
   REFUNDED
 }
 
-enum ShippingStatus {
-  PENDIENTE
-  PREPARANDO
-  ENVIADO
-  EN_TRANSITO
-  ENTREGADO
-}
-
 model User {
   id                String    @id @default(cuid())
   email             String    @unique
@@ -111,10 +103,10 @@ model Order {
   customerEmail    String
   customerPhone    String?
   notes            String?
-  trackingNumber   String?        // guía de envío
-  trackingUrl      String?        // URL directa de rastreo
-  shippingCarrier  String?        // paquetería (DHL, FedEx, Estafeta…)
-  shippingStatus   ShippingStatus @default(PENDIENTE)
+  trackingNumber   String?     // guía de envío
+  trackingUrl      String?     // URL directa de rastreo (nuevo)
+  shippingCarrier  String?     // paquetería (DHL, FedEx, Estafeta…)
+  shippingStatus   String?     // estado manual: PENDIENTE/PREPARANDO/ENVIADO/EN_TRANSITO/ENTREGADO (nuevo)
   paidAt           DateTime?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt

@@ -56,7 +56,11 @@ export default function AdminDashboard() {
 
   useEffect(() => { if (user?.role === "ADMIN") fetchData() }, [user])
 
-  if (authLoading) return null
+  if (authLoading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    </div>
+  )
   if (!user || user.role !== "ADMIN") return (
     <div className="min-h-screen flex items-center justify-center">
       <p className="text-muted-foreground">Acceso denegado</p>

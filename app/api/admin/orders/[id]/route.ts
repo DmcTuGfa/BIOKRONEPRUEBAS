@@ -3,12 +3,14 @@ import { requireAdmin } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
+const SHIPPING_STATUSES = ["PENDIENTE", "PREPARANDO", "ENVIADO", "EN_TRANSITO", "ENTREGADO"] as const
+
 const schema = z.object({
   status:          z.enum(["PENDING","PAID","PROCESSING","SHIPPED","DELIVERED","CANCELLED","REFUNDED"]).optional(),
   trackingNumber:  z.string().optional().nullable(),
-  trackingUrl:     z.string().url().optional().nullable(),
+  trackingUrl:     z.string().optional().nullable(),
   shippingCarrier: z.string().optional().nullable(),
-  shippingStatus:  z.enum(["PENDIENTE","PREPARANDO","ENVIADO","EN_TRANSITO","ENTREGADO"]).optional(),
+  shippingStatus:  z.enum(SHIPPING_STATUSES).optional().nullable(),
 })
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
@@ -40,7 +42,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       where: { id: params.id },
       select: { status: true },
     })
-
     if (!current) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 })
 
     // Auto-avanzar a SHIPPED si se asigna guía y no está en estado final
@@ -55,12 +56,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       newStatus = "SHIPPED"
     }
 
-    // Calcular shippingStatus automático al marcar como ENVIADO si no viene en body
+    // Auto-actualizar shippingStatus según el nuevo status si no viene explícito
     let newShippingStatus = body.shippingStatus
-    if (newStatus === "SHIPPED" && !newShippingStatus) {
-      newShippingStatus = "ENVIADO"
-    } else if (newStatus === "DELIVERED" && !newShippingStatus) {
-      newShippingStatus = "ENTREGADO"
+    if (newShippingStatus === undefined) {
+      if (newStatus === "SHIPPED")    newShippingStatus = "ENVIADO"
+      if (newStatus === "DELIVERED")  newShippingStatus = "ENTREGADO"
     }
 
     const order = await prisma.order.update({
