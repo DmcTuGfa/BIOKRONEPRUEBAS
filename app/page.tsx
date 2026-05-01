@@ -5,26 +5,24 @@ import Link from "next/link"
 import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
 import { CoverageSection } from "@/components/coverage-section"
-import { InternationalCoverageSection } from "@/components/international-coverage-section"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ArrowRight, Shield, Bug, Leaf } from "lucide-react"
-import { productsData } from "@/lib/products-data"
 
 const PORTAFOLIO_BG_IMAGE = "/images/campo-hero.jpg"
+
+const categoryStats = {
+  FUNGICIDAS: 0,
+  BIOINSECTICIDAS: 0,
+  BIOFORTIFICANTES: 0,
+}
 
 export default function Home() {
   const scrollToSection = useCallback((section: string) => {
     const element = document.getElementById(section)
     if (element) element.scrollIntoView({ behavior: "smooth" })
   }, [])
-
-  const categoryStats = {
-    FUNGICIDAS: productsData.filter((p) => p.category === "FUNGICIDAS").length,
-    BIOINSECTICIDAS: productsData.filter((p) => p.category === "BIOINSECTICIDAS").length,
-    BIOFORTIFICANTES: productsData.filter((p) => p.category === "BIOFORTIFICANTES").length,
-  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -36,13 +34,6 @@ export default function Home() {
         <section id="cobertura" className="py-20 bg-background">
           <div className="container mx-auto px-4">
             <CoverageSection />
-          </div>
-        </section>
-
-        {/* Cobertura Internacional */}
-        <section id="internacional" className="py-20 bg-background">
-          <div className="container mx-auto px-4">
-            <InternationalCoverageSection />
           </div>
         </section>
 
@@ -72,8 +63,6 @@ export default function Home() {
                     </div>
                     <h3 className="text-xl font-semibold text-white mb-2">Fungicidas</h3>
                     <p className="text-sm text-white/60 mb-3">Control de hongos, bacterias y nematodos</p>
-                    <span className="text-2xl font-bold text-blue-400">{categoryStats.FUNGICIDAS}</span>
-                    <span className="text-white/60 text-sm ml-1">productos</span>
                   </CardContent>
                 </Card>
               </Link>
@@ -86,8 +75,6 @@ export default function Home() {
                     </div>
                     <h3 className="text-xl font-semibold text-white mb-2">Bioinsecticidas</h3>
                     <p className="text-sm text-white/60 mb-3">Control de plagas e insectos</p>
-                    <span className="text-2xl font-bold text-orange-400">{categoryStats.BIOINSECTICIDAS}</span>
-                    <span className="text-white/60 text-sm ml-1">productos</span>
                   </CardContent>
                 </Card>
               </Link>
@@ -100,8 +87,6 @@ export default function Home() {
                     </div>
                     <h3 className="text-xl font-semibold text-white mb-2">Biofortificantes</h3>
                     <p className="text-sm text-white/60 mb-3">Nutrición y bioestimulación</p>
-                    <span className="text-2xl font-bold text-green-400">{categoryStats.BIOFORTIFICANTES}</span>
-                    <span className="text-white/60 text-sm ml-1">productos</span>
                   </CardContent>
                 </Card>
               </Link>
